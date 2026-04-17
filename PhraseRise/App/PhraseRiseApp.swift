@@ -9,6 +9,7 @@ struct PhraseRiseApp: App {
     var body: some Scene {
         WindowGroup {
             RootTabView(dependencies: dependencies)
+                .preferredColorScheme(.dark)
                 .task {
                     dependencies.bootstrap()
                 }
