@@ -15,6 +15,7 @@ final class PhraseEditorViewModel {
     var startRatio: Double
     var endRatio: Double
     var errorMessage: String?
+    var shouldShowPaywall = false
 
     init(song: Song, phrase: Phrase?, dependencies: AppDependencies) {
         self.song = song
@@ -91,6 +92,7 @@ final class PhraseEditorViewModel {
             break
         case let .blocked(reason):
             errorMessage = reason
+            shouldShowPaywall = true
             return nil
         }
 

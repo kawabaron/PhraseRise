@@ -48,6 +48,11 @@ final class PracticeRecordRepository {
         return record
     }
 
+    func save(_ record: PracticeRecord) {
+        _ = record
+        save()
+    }
+
     func delete(_ record: PracticeRecord) {
         context.delete(record)
         save()

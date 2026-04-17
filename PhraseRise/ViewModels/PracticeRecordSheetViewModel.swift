@@ -9,6 +9,7 @@ final class PracticeRecordSheetViewModel {
     private let practiceRecordRepository: PracticeRecordRepository
     private let performanceRecordingRepository: PerformanceRecordingRepository
     private let suggestionEngine: PracticeSuggestionEngine
+    private let subscriptionService: SubscriptionService
 
     var bpm: Int
     var resultType: PracticeResultType = .stable
@@ -24,6 +25,7 @@ final class PracticeRecordSheetViewModel {
         practiceRecordRepository = dependencies.practiceRecordRepository
         performanceRecordingRepository = dependencies.performanceRecordingRepository
         suggestionEngine = dependencies.suggestionEngine
+        subscriptionService = dependencies.subscriptionService
         bpm = initialBpm
 
         if let latestRecording = performanceRecordingRepository.fetch(phraseId: phrase.id).first {
@@ -65,7 +67,7 @@ final class PracticeRecordSheetViewModel {
     }
 
     private func updatePhraseSummary() {
-        let suggestion = suggestionEngine.makeSuggestion(from: bpm, resultType: resultType)
+        let suggestion = subscriptionService.suggestion(for: bpm, resultType: resultType, engine: suggestionEngine)
 
         if resultType == .stable {
             phrase.lastStableBpm = bpm

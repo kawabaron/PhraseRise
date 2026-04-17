@@ -38,7 +38,11 @@ final class SourceCaptureService: NSObject {
 
     func startCapture(recordingQualityPreset: String) throws {
         guard recorder == nil else {
-            throw NSError(domain: "PhraseRise.SourceCapture", code: 0, userInfo: [NSLocalizedDescriptionKey: "既に録音が進行中です。"])
+            throw NSError(
+                domain: "PhraseRise.SourceCapture",
+                code: 0,
+                userInfo: [NSLocalizedDescriptionKey: "既に録音が進行中です。"]
+            )
         }
 
         try audioSessionCoordinator.configureForSourceCapture()
@@ -50,7 +54,11 @@ final class SourceCaptureService: NSObject {
         recorder.isMeteringEnabled = true
         recorder.prepareToRecord()
         guard recorder.record() else {
-            throw NSError(domain: "PhraseRise.SourceCapture", code: 1, userInfo: [NSLocalizedDescriptionKey: "録音を開始できませんでした。"])
+            throw NSError(
+                domain: "PhraseRise.SourceCapture",
+                code: 1,
+                userInfo: [NSLocalizedDescriptionKey: "録音を開始できませんでした。"]
+            )
         }
 
         self.recorder = recorder
@@ -67,7 +75,11 @@ final class SourceCaptureService: NSObject {
 
     func stopCapture() throws -> SourceCaptureOutput {
         guard let recorder, let activeFileURL else {
-            throw NSError(domain: "PhraseRise.SourceCapture", code: 2, userInfo: [NSLocalizedDescriptionKey: "停止できる録音がありません。"])
+            throw NSError(
+                domain: "PhraseRise.SourceCapture",
+                code: 2,
+                userInfo: [NSLocalizedDescriptionKey: "停止できる録音がありません。"]
+            )
         }
 
         let duration = recorder.currentTime

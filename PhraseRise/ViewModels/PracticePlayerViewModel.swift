@@ -24,6 +24,7 @@ final class PracticePlayerViewModel {
     var latestRecordingSummary: String
     var hasLatestRecording: Bool
     var errorMessage: String?
+    var shouldShowPaywall = false
 
     init(phrase: Phrase, song: Song, dependencies: AppDependencies) {
         self.phrase = phrase
@@ -151,6 +152,10 @@ final class PracticePlayerViewModel {
                 recordingElapsedSec = 0
                 refreshLatestRecordingSummary()
             } catch {
+                let nsError = error as NSError
+                if nsError.code == 402 {
+                    shouldShowPaywall = true
+                }
                 errorMessage = error.localizedDescription
             }
             return

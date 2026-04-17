@@ -41,20 +41,21 @@ final class AppDependencies {
             draftRepository: sourceCaptureDraftRepository,
             waveformAnalysisService: waveformAnalysisService
         )
+        suggestionEngine = PracticeSuggestionEngine()
+        subscriptionService = SubscriptionService(subscriptionRepository: subscriptionRepository)
         audioPreviewService = AudioPreviewService(audioSessionCoordinator: audioSessionCoordinator)
         audioPlaybackService = AudioPlaybackService(audioSessionCoordinator: audioSessionCoordinator)
         performanceRecordingService = PerformanceRecordingService(
             audioSessionCoordinator: audioSessionCoordinator,
             performanceRecordingRepository: performanceRecordingRepository,
-            settingsRepository: settingsRepository
+            settingsRepository: settingsRepository,
+            subscriptionService: subscriptionService
         )
         phraseLoopService = PhraseLoopService()
         fileImportService = FileImportService(
             songRepository: songRepository,
             waveformAnalysisService: waveformAnalysisService
         )
-        suggestionEngine = PracticeSuggestionEngine()
-        subscriptionService = SubscriptionService(subscriptionRepository: subscriptionRepository)
         sampleDataSeeder = SampleDataSeeder(
             songRepository: songRepository,
             phraseRepository: phraseRepository,

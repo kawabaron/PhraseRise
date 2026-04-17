@@ -40,6 +40,18 @@ struct PracticePlayerView: View {
         .sheet(isPresented: $isPresentingRecordSheet) {
             PracticeRecordSheet(phrase: phrase, initialBpm: viewModel.bpm, dependencies: dependencies)
         }
+        .sheet(
+            isPresented: Binding(
+                get: { viewModel.shouldShowPaywall },
+                set: { isPresented in
+                    if !isPresented {
+                        viewModel.shouldShowPaywall = false
+                    }
+                }
+            )
+        ) {
+            PaywallView(dependencies: dependencies, message: viewModel.errorMessage)
+        }
         .task {
             viewModel.handleAppear()
         }
@@ -47,9 +59,9 @@ struct PracticePlayerView: View {
             viewModel.handleDisappear()
         }
         .alert(
-            "再生エラー",
+            "エラー",
             isPresented: Binding(
-                get: { viewModel.errorMessage != nil },
+                get: { viewModel.errorMessage != nil && !viewModel.shouldShowPaywall },
                 set: { isPresented in
                     if !isPresented {
                         viewModel.errorMessage = nil
@@ -59,7 +71,7 @@ struct PracticePlayerView: View {
         ) {
             Button("閉じる", role: .cancel) { }
         } message: {
-            Text(viewModel.errorMessage ?? "不明なエラー")
+            Text(viewModel.errorMessage ?? "不明なエラーです。")
         }
     }
 
@@ -78,17 +90,17 @@ struct PracticePlayerView: View {
                     Spacer()
                     metric("前回 stable", value: phrase.lastStableBpm.map { "\($0)" } ?? "--")
                     Spacer()
-                    metric("次回開始", value: phrase.recommendedStartBpm.map { "\($0)" } ?? "--")
+                    metric("今日の開始", value: phrase.recommendedStartBpm.map { "\($0)" } ?? "--")
                 }
 
                 HStack {
-                    Label("現在位置 \(Formatting.duration(viewModel.currentTimeSec))", systemImage: "play.fill")
+                    Label("再生位置 \(Formatting.duration(viewModel.currentTimeSec))", systemImage: "play.fill")
                     Spacer()
                     if viewModel.isRecording {
                         Label("演奏録音 \(Formatting.duration(viewModel.recordingElapsedSec))", systemImage: "record.circle.fill")
                             .foregroundStyle(AppColors.recording)
                     } else {
-                        Text(viewModel.hasLatestRecording ? viewModel.latestRecordingSummary : "演奏録音はまだありません")
+                        Text(viewModel.latestRecordingSummary)
                     }
                 }
                 .font(AppTypography.caption)

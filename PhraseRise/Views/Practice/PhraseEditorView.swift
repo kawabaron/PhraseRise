@@ -2,16 +2,18 @@ import SwiftUI
 
 struct PhraseEditorView: View {
     @Environment(\.dismiss) private var dismiss
+    let dependencies: AppDependencies
     @State private var viewModel: PhraseEditorViewModel
 
     init(song: Song, phrase: Phrase? = nil, dependencies: AppDependencies) {
+        self.dependencies = dependencies
         _viewModel = State(initialValue: PhraseEditorViewModel(song: song, phrase: phrase, dependencies: dependencies))
     }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: AppSpacing.large) {
-                StudioSectionHeader("Phrase を切り出し", subtitle: "A/B を決めて、そのまま練習フレーズとして保存")
+                StudioSectionHeader("Phrase を作成", subtitle: "A/B を決めて、難所フレーズとして保存します。")
 
                 WaveformPlaceholderView(
                     values: viewModel.waveformValues,
@@ -21,7 +23,7 @@ struct PhraseEditorView: View {
 
                 StudioCard {
                     VStack(alignment: .leading, spacing: 14) {
-                        Text("範囲調整")
+                        Text("範囲を調整")
                             .font(AppTypography.cardTitle)
 
                         VStack(alignment: .leading, spacing: 8) {
@@ -101,10 +103,22 @@ struct PhraseEditorView: View {
         }
         .navigationTitle("Phrase Editor")
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(
+            isPresented: Binding(
+                get: { viewModel.shouldShowPaywall },
+                set: { isPresented in
+                    if !isPresented {
+                        viewModel.shouldShowPaywall = false
+                    }
+                }
+            )
+        ) {
+            PaywallView(dependencies: dependencies, message: viewModel.errorMessage)
+        }
         .alert(
             "保存エラー",
             isPresented: Binding(
-                get: { viewModel.errorMessage != nil },
+                get: { viewModel.errorMessage != nil && !viewModel.shouldShowPaywall },
                 set: { isPresented in
                     if !isPresented {
                         viewModel.errorMessage = nil
@@ -114,7 +128,7 @@ struct PhraseEditorView: View {
         ) {
             Button("閉じる", role: .cancel) { }
         } message: {
-            Text(viewModel.errorMessage ?? "不明なエラー")
+            Text(viewModel.errorMessage ?? "不明なエラーです。")
         }
     }
 

@@ -22,7 +22,7 @@ struct PhraseSummaryCard: View {
                     Spacer()
 
                     if snapshot.hasRecording {
-                        Label("録音あり", systemImage: "waveform.badge.mic")
+                        Label("演奏録音あり", systemImage: "waveform.badge.mic")
                             .font(AppTypography.caption)
                             .foregroundStyle(AppColors.accent)
                     }
@@ -33,7 +33,7 @@ struct PhraseSummaryCard: View {
                     Spacer()
                     metric(title: "次回開始", value: bpmText(snapshot.phrase.recommendedStartBpm))
                     Spacer()
-                    metric(title: "最終日", value: Formatting.relativeDate(snapshot.latestRecord?.practicedAt))
+                    metric(title: "最終練習", value: Formatting.relativeDate(snapshot.latestRecord?.practicedAt))
                 }
             }
         }

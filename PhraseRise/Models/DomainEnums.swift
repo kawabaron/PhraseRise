@@ -10,7 +10,7 @@ enum SongSourceType: String, Codable, CaseIterable, Identifiable {
     var label: String {
         switch self {
         case .imported:
-            return "Files から追加"
+            return "Filesから追加"
         case .micRecorded:
             return "練習音源を録音"
         }
@@ -27,11 +27,11 @@ enum PhraseStatus: String, Codable, CaseIterable, Identifiable {
     var label: String {
         switch self {
         case .active:
-            return "練習中"
+            return "active"
         case .mastered:
-            return "達成"
+            return "mastered"
         case .archived:
-            return "保管"
+            return "archived"
         }
     }
 
@@ -55,7 +55,14 @@ enum PracticeResultType: String, Codable, CaseIterable, Identifiable {
     var id: String { rawValue }
 
     var label: String {
-        rawValue
+        switch self {
+        case .stable:
+            return "stable"
+        case .barely:
+            return "barely"
+        case .failed:
+            return "failed"
+        }
     }
 
     var tint: Color {

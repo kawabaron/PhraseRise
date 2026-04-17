@@ -6,6 +6,7 @@ final class PerformanceRecordingService {
     private let audioSessionCoordinator: AudioSessionCoordinator
     private let performanceRecordingRepository: PerformanceRecordingRepository
     private let settingsRepository: SettingsRepository
+    private let subscriptionService: SubscriptionService
 
     private var recorder: AVAudioRecorder?
     private var activeFileURL: URL?
@@ -15,11 +16,13 @@ final class PerformanceRecordingService {
     init(
         audioSessionCoordinator: AudioSessionCoordinator,
         performanceRecordingRepository: PerformanceRecordingRepository,
-        settingsRepository: SettingsRepository
+        settingsRepository: SettingsRepository,
+        subscriptionService: SubscriptionService
     ) {
         self.audioSessionCoordinator = audioSessionCoordinator
         self.performanceRecordingRepository = performanceRecordingRepository
         self.settingsRepository = settingsRepository
+        self.subscriptionService = subscriptionService
     }
 
     var isRecording: Bool {
@@ -84,6 +87,22 @@ final class PerformanceRecordingService {
         let duration = recorder.currentTime
         recorder.stop()
         self.recorder = nil
+
+        let currentCount = performanceRecordingRepository.fetchAll().count
+        switch subscriptionService.gateRecordingSave(currentCount: currentCount) {
+        case .allowed:
+            break
+        case let .blocked(reason):
+            try? FileManager.default.removeItem(at: activeFileURL)
+            self.activeFileURL = nil
+            self.activePhraseID = nil
+            self.activeBpm = nil
+            throw NSError(
+                domain: "PhraseRise.PerformanceRecording",
+                code: 402,
+                userInfo: [NSLocalizedDescriptionKey: reason]
+            )
+        }
 
         let fileSizeBytes = Int64((try? activeFileURL.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0)
         let existingCount = performanceRecordingRepository.fetch(phraseId: activePhraseID).count

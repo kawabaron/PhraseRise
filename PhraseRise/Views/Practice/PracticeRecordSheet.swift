@@ -33,7 +33,7 @@ struct PracticeRecordSheet: View {
                 }
 
                 Section("演奏録音") {
-                    Toggle("最新録音を紐付ける", isOn: $viewModel.linkLatestRecording)
+                    Toggle("最新の演奏録音を紐付ける", isOn: $viewModel.linkLatestRecording)
                     Text(viewModel.latestRecordingSummary)
                         .font(AppTypography.caption)
                         .foregroundStyle(AppColors.textSecondary)
@@ -68,7 +68,7 @@ struct PracticeRecordSheet: View {
             ) {
                 Button("閉じる", role: .cancel) { }
             } message: {
-                Text(viewModel.errorMessage ?? "不明なエラー")
+                Text(viewModel.errorMessage ?? "不明なエラーです。")
             }
         }
     }
