@@ -19,6 +19,8 @@ final class AppDependencies {
     let audioPreviewService: AudioPreviewService
     let audioPlaybackService: AudioPlaybackService
     let performanceRecordingService: PerformanceRecordingService
+    let phraseDeletionService: PhraseDeletionService
+    let songDeletionService: SongDeletionService
     let phraseLoopService: PhraseLoopService
     let fileImportService: FileImportService
     let suggestionEngine: PracticeSuggestionEngine
@@ -50,6 +52,16 @@ final class AppDependencies {
             performanceRecordingRepository: performanceRecordingRepository,
             settingsRepository: settingsRepository,
             subscriptionService: subscriptionService
+        )
+        phraseDeletionService = PhraseDeletionService(
+            phraseRepository: phraseRepository,
+            practiceRecordRepository: practiceRecordRepository,
+            performanceRecordingRepository: performanceRecordingRepository
+        )
+        songDeletionService = SongDeletionService(
+            songRepository: songRepository,
+            phraseRepository: phraseRepository,
+            phraseDeletionService: phraseDeletionService
         )
         phraseLoopService = PhraseLoopService()
         fileImportService = FileImportService(

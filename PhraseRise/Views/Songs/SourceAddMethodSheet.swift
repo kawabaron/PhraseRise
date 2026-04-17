@@ -6,7 +6,7 @@ struct SourceAddMethodSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.large) {
-            StudioSectionHeader("練習音源を追加", subtitle: "Files またはマイク録音から Song を作成")
+            StudioSectionHeader("練習音源を追加", subtitle: "Files またはマイク録音から Song を作成します。")
 
             Button(action: onPickFiles) {
                 Label("Files から追加", systemImage: "folder.badge.plus")

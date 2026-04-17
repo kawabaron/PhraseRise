@@ -34,45 +34,49 @@ struct SongsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: AppSpacing.large) {
-                StudioSectionHeader("練習音源", subtitle: "Files またはマイク録音から追加")
+                StudioSectionHeader("練習音源", subtitle: "Files またはマイク録音から追加できます。")
 
-                ForEach(viewModel.songs, id: \.id) { song in
-                    NavigationLink {
-                        SongDetailView(song: song, dependencies: dependencies)
-                    } label: {
-                        StudioCard {
-                            VStack(alignment: .leading, spacing: 12) {
-                                HStack {
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text(song.title)
-                                            .font(AppTypography.cardTitle)
-                                        Text(song.artistName ?? song.sourceType.label)
-                                            .font(AppTypography.caption)
-                                            .foregroundStyle(AppColors.textSecondary)
+                if viewModel.songs.isEmpty {
+                    emptyCard
+                } else {
+                    ForEach(viewModel.songs, id: \.id) { song in
+                        NavigationLink {
+                            SongDetailView(song: song, dependencies: dependencies)
+                        } label: {
+                            StudioCard(emphasisColor: song.sourceType == .micRecorded ? AppColors.recording : AppColors.accent) {
+                                VStack(alignment: .leading, spacing: 12) {
+                                    HStack {
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text(song.title)
+                                                .font(AppTypography.cardTitle)
+                                            Text(song.artistName ?? song.sourceType.label)
+                                                .font(AppTypography.caption)
+                                                .foregroundStyle(AppColors.textSecondary)
+                                        }
+
+                                        Spacer()
+
+                                        Label(
+                                            song.sourceType == .micRecorded ? "mic" : "file",
+                                            systemImage: song.sourceType == .micRecorded ? "mic.fill" : "folder"
+                                        )
+                                        .font(AppTypography.caption)
+                                        .foregroundStyle(song.sourceType == .micRecorded ? AppColors.recording : AppColors.accent)
                                     }
 
-                                    Spacer()
-
-                                    Label(
-                                        song.sourceType == .micRecorded ? "mic" : "file",
-                                        systemImage: song.sourceType == .micRecorded ? "mic.fill" : "folder"
-                                    )
+                                    HStack {
+                                        Label(Formatting.duration(song.durationSec), systemImage: "clock")
+                                        Spacer()
+                                        Label(Formatting.date(song.updatedAt), systemImage: "calendar")
+                                    }
                                     .font(AppTypography.caption)
-                                    .foregroundStyle(song.sourceType == .micRecorded ? AppColors.recording : AppColors.accent)
+                                    .foregroundStyle(AppColors.textSecondary)
                                 }
-
-                                HStack {
-                                    Label(Formatting.duration(song.durationSec), systemImage: "clock")
-                                    Spacer()
-                                    Label(Formatting.date(song.updatedAt), systemImage: "calendar")
-                                }
-                                .font(AppTypography.caption)
-                                .foregroundStyle(AppColors.textSecondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
                             }
-                            .frame(maxWidth: .infinity, alignment: .leading)
                         }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                 }
             }
             .padding(.horizontal, AppSpacing.screenHorizontal)
@@ -80,6 +84,7 @@ struct SongsView: View {
             .padding(.bottom, 120)
         }
         .navigationTitle("Songs")
+        .studioScreen()
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
@@ -145,10 +150,26 @@ struct SongsView: View {
         ) {
             Button("閉じる", role: .cancel) { }
         } message: {
-            Text(importErrorMessage ?? "不明なエラー")
+            Text(importErrorMessage ?? "不明なエラーです。")
         }
         .task {
             viewModel.refresh()
+        }
+        .onAppear {
+            viewModel.refresh()
+        }
+    }
+
+    private var emptyCard: some View {
+        StudioCard {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("まだ練習音源がありません。")
+                    .font(AppTypography.cardTitle)
+                Text("右上の追加ボタンから、Files または練習音源を録音して始められます。")
+                    .font(AppTypography.body)
+                    .foregroundStyle(AppColors.textSecondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 }

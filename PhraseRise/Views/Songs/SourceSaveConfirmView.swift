@@ -24,13 +24,13 @@ struct SourceSaveConfirmView: View {
             VStack(alignment: .leading, spacing: AppSpacing.large) {
                 StudioSectionHeader(
                     "練習音源を保存",
-                    subtitle: "録音した練習音源を確認して Song として保存します"
+                    subtitle: "録音した練習音源を確認して Song として保存します。"
                 )
 
                 WaveformPlaceholderView(values: viewModel.waveformValues, showHead: false)
                     .frame(height: 190)
 
-                StudioCard {
+                StudioCard(emphasisColor: AppColors.recording) {
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
                             metric("録音時間", value: Formatting.duration(viewModel.draft?.durationSec ?? 0))
@@ -48,7 +48,7 @@ struct SourceSaveConfirmView: View {
                                 .padding(14)
                                 .background(
                                     RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                        .fill(AppColors.backgroundSecondary)
+                                        .fill(AppColors.surfaceGlass.opacity(0.82))
                                 )
                         }
                     }
@@ -63,7 +63,7 @@ struct SourceSaveConfirmView: View {
                             systemImage: viewModel.isPreviewPlaying ? "stop.fill" : "play.fill"
                         )
                     }
-                    .buttonStyle(FilledStudioButtonStyle(tint: AppColors.surfaceRaised))
+                    .buttonStyle(FilledStudioButtonStyle(tint: AppColors.surfaceGlass))
 
                     Button {
                         if let song = viewModel.saveSong() {
@@ -109,7 +109,7 @@ struct SourceSaveConfirmView: View {
             ) {
                 Button("閉じる", role: .cancel) { }
             } message: {
-                Text(viewModel.errorMessage ?? "不明なエラー")
+                Text(viewModel.errorMessage ?? "不明なエラーです。")
             }
         }
     }

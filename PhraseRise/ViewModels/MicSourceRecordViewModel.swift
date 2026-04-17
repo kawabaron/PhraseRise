@@ -45,7 +45,7 @@ final class MicSourceRecordViewModel {
         }
 
         guard permissionState == .granted else {
-            errorMessage = "マイク権限が未許可です。設定からマイクを有効にしてください。"
+            errorMessage = "マイク権限が未許可です。設定から PhraseRise のマイク利用を有効にしてください。"
             return
         }
 

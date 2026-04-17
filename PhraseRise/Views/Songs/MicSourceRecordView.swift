@@ -23,7 +23,7 @@ struct MicSourceRecordView: View {
             VStack(alignment: .leading, spacing: AppSpacing.large) {
                 StudioSectionHeader(
                     "練習音源を録音",
-                    subtitle: "ここでは Song 作成用の練習音源だけを扱います"
+                    subtitle: "ここでは Song 作成用の練習音源だけを録音します。"
                 )
 
                 if viewModel.permissionState == .denied {
@@ -65,17 +65,17 @@ struct MicSourceRecordView: View {
             ) {
                 Button("閉じる", role: .cancel) { }
             } message: {
-                Text(viewModel.errorMessage ?? "不明なエラー")
+                Text(viewModel.errorMessage ?? "不明なエラーです。")
             }
         }
     }
 
     private var permissionCard: some View {
-        StudioCard {
+        StudioCard(emphasisColor: AppColors.recording) {
             VStack(alignment: .leading, spacing: 14) {
-                Label("マイク権限が必要です", systemImage: "mic.slash.fill")
+                Label("マイク権限が未許可です", systemImage: "mic.slash.fill")
                     .foregroundStyle(AppColors.recording)
-                Text("練習音源録音を使うには、設定アプリから PhraseRise のマイク利用を有効にしてください。")
+                Text("練習音源を録音するには、設定アプリから PhraseRise のマイク利用を有効にしてください。")
                     .font(AppTypography.body)
                     .foregroundStyle(AppColors.textSecondary)
                 Button("設定を開く") {
@@ -87,7 +87,7 @@ struct MicSourceRecordView: View {
     }
 
     private var statusCard: some View {
-        StudioCard {
+        StudioCard(emphasisColor: statusTint) {
             VStack(alignment: .leading, spacing: 18) {
                 HStack {
                     Label(statusLabel, systemImage: statusSymbol)
@@ -100,7 +100,7 @@ struct MicSourceRecordView: View {
                 ProgressView(value: viewModel.inputLevel)
                     .tint(AppColors.recording)
 
-                Text("録音中は赤い状態表示を固定し、練習フローの演奏録音と混同しない文言にしています。")
+                Text("録音中は入力レベルを見ながら、Song 作成用の練習音源として聞きやすい位置で録ってください。")
                     .font(AppTypography.caption)
                     .foregroundStyle(AppColors.textSecondary)
             }
@@ -127,7 +127,7 @@ struct MicSourceRecordView: View {
                     } label: {
                         Label("一時停止", systemImage: "pause.fill")
                     }
-                    .buttonStyle(FilledStudioButtonStyle(tint: AppColors.surfaceRaised))
+                    .buttonStyle(FilledStudioButtonStyle(tint: AppColors.surfaceGlass))
 
                     Button {
                         if let draftID = viewModel.stopCapture() {
@@ -169,7 +169,7 @@ struct MicSourceRecordView: View {
         if viewModel.isPaused {
             return "一時停止中"
         }
-        return "待機中"
+        return "準備中"
     }
 
     private var statusSymbol: String {
