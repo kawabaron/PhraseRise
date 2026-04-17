@@ -52,6 +52,11 @@ final class PerformanceRecordingRepository {
         return recording
     }
 
+    func save(_ recording: PerformanceRecording) {
+        _ = recording
+        save()
+    }
+
     func delete(_ recording: PerformanceRecording) {
         context.delete(recording)
         save()

@@ -3,6 +3,7 @@ import SwiftUI
 struct WaveformPlaceholderView: View {
     let values: [Double]
     var selection: ClosedRange<Double>?
+    var headPosition: Double?
     var showHead: Bool = true
 
     var body: some View {
@@ -36,9 +37,13 @@ struct WaveformPlaceholderView: View {
 
                 if showHead {
                     Rectangle()
-                        .fill(Color.white.opacity(0.9))
+                        .fill(Color.white.opacity(0.92))
                         .frame(width: 2)
                         .padding(.vertical, AppSpacing.small)
+                        .position(
+                            x: min(max((headPosition ?? 0.5) * width, 1), width - 1),
+                            y: height / 2
+                        )
                 }
             }
         }

@@ -2,23 +2,23 @@ import SwiftUI
 
 struct PracticeRecordSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var bpm = 96
-    @State private var resultType: PracticeResultType = .stable
-    @State private var durationMinutes = 10
-    @State private var memo = ""
-    @State private var linkLatestRecording = true
+    @State private var viewModel: PracticeRecordSheetViewModel
+
+    init(phrase: Phrase, initialBpm: Int, dependencies: AppDependencies) {
+        _viewModel = State(initialValue: PracticeRecordSheetViewModel(phrase: phrase, initialBpm: initialBpm, dependencies: dependencies))
+    }
 
     var body: some View {
         NavigationStack {
             Form {
                 Section("達成 BPM") {
-                    Stepper(value: $bpm, in: 40 ... 240) {
-                        Text("\(bpm) BPM")
+                    Stepper(value: $viewModel.bpm, in: 40 ... 240) {
+                        Text("\(viewModel.bpm) BPM")
                     }
                 }
 
                 Section("結果") {
-                    Picker("結果", selection: $resultType) {
+                    Picker("結果", selection: $viewModel.resultType) {
                         ForEach(PracticeResultType.allCases) { result in
                             Text(result.label).tag(result)
                         }
@@ -27,14 +27,20 @@ struct PracticeRecordSheet: View {
                 }
 
                 Section("練習時間") {
-                    Stepper(value: $durationMinutes, in: 1 ... 120) {
-                        Text("\(durationMinutes) 分")
+                    Stepper(value: $viewModel.durationMinutes, in: 1 ... 120) {
+                        Text("\(viewModel.durationMinutes) 分")
                     }
-                    Toggle("最新録音を紐付ける", isOn: $linkLatestRecording)
+                }
+
+                Section("演奏録音") {
+                    Toggle("最新録音を紐付ける", isOn: $viewModel.linkLatestRecording)
+                    Text(viewModel.latestRecordingSummary)
+                        .font(AppTypography.caption)
+                        .foregroundStyle(AppColors.textSecondary)
                 }
 
                 Section("メモ") {
-                    TextField("メモ", text: $memo, axis: .vertical)
+                    TextField("メモ", text: $viewModel.memo, axis: .vertical)
                 }
             }
             .scrollContentBackground(.hidden)
@@ -43,9 +49,26 @@ struct PracticeRecordSheet: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("保存") {
-                        dismiss()
+                        if viewModel.saveRecord() != nil {
+                            dismiss()
+                        }
                     }
                 }
+            }
+            .alert(
+                "保存エラー",
+                isPresented: Binding(
+                    get: { viewModel.errorMessage != nil },
+                    set: { isPresented in
+                        if !isPresented {
+                            viewModel.errorMessage = nil
+                        }
+                    }
+                )
+            ) {
+                Button("閉じる", role: .cancel) { }
+            } message: {
+                Text(viewModel.errorMessage ?? "不明なエラー")
             }
         }
     }

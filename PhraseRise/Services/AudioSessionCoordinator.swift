@@ -42,8 +42,13 @@ final class AudioSessionCoordinator {
         try session.setActive(true)
     }
 
+    func configureForPerformanceRecording() throws {
+        try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetooth])
+        try session.setActive(true)
+    }
+
     func configureForPreviewPlayback() throws {
-        try session.setCategory(.playback, mode: .default)
+        try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetooth])
         try session.setActive(true)
     }
 

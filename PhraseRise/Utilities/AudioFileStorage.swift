@@ -18,6 +18,10 @@ enum AudioFileStorage {
         try ensureDirectory(named: "PhraseRise/SourceDrafts", fileManager: fileManager)
     }
 
+    static func performanceRecordingsDirectory(phraseID: UUID, fileManager: FileManager = .default) throws -> URL {
+        try ensureDirectory(named: "PhraseRise/PerformanceRecordings/\(phraseID.uuidString)", fileManager: fileManager)
+    }
+
     static func uniqueAudioFileURL(in directory: URL, fileExtension: String) -> URL {
         directory.appendingPathComponent("\(UUID().uuidString).\(fileExtension)")
     }

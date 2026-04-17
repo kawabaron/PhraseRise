@@ -17,6 +17,9 @@ final class AppDependencies {
     let sourceCaptureService: SourceCaptureService
     let sourceSongCreationService: SourceSongCreationService
     let audioPreviewService: AudioPreviewService
+    let audioPlaybackService: AudioPlaybackService
+    let performanceRecordingService: PerformanceRecordingService
+    let phraseLoopService: PhraseLoopService
     let fileImportService: FileImportService
     let suggestionEngine: PracticeSuggestionEngine
     let subscriptionService: SubscriptionService
@@ -39,6 +42,13 @@ final class AppDependencies {
             waveformAnalysisService: waveformAnalysisService
         )
         audioPreviewService = AudioPreviewService(audioSessionCoordinator: audioSessionCoordinator)
+        audioPlaybackService = AudioPlaybackService(audioSessionCoordinator: audioSessionCoordinator)
+        performanceRecordingService = PerformanceRecordingService(
+            audioSessionCoordinator: audioSessionCoordinator,
+            performanceRecordingRepository: performanceRecordingRepository,
+            settingsRepository: settingsRepository
+        )
+        phraseLoopService = PhraseLoopService()
         fileImportService = FileImportService(
             songRepository: songRepository,
             waveformAnalysisService: waveformAnalysisService
