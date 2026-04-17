@@ -1,13 +1,13 @@
 import SwiftUI
 
 enum AppColors {
-    static let background = Color(red: 0.05, green: 0.06, blue: 0.08)
-    static let backgroundSecondary = Color(red: 0.09, green: 0.11, blue: 0.14)
-    static let surface = Color(red: 0.11, green: 0.13, blue: 0.17)
-    static let surfaceRaised = Color(red: 0.14, green: 0.17, blue: 0.21)
-    static let surfaceGlass = Color(red: 0.18, green: 0.21, blue: 0.26)
-    static let border = Color.white.opacity(0.10)
-    static let shadow = Color.black.opacity(0.28)
+    static let background = Color(red: 0.055, green: 0.066, blue: 0.086)
+    static let backgroundSecondary = Color(red: 0.070, green: 0.082, blue: 0.106)
+    static let surface = Color(red: 0.118, green: 0.137, blue: 0.169)
+    static let surfaceRaised = Color(red: 0.145, green: 0.169, blue: 0.204)
+    static let surfaceGlass = Color(red: 0.180, green: 0.210, blue: 0.260)
+    static let border = Color.white.opacity(0.08)
+    static let shadow = Color.black.opacity(0.34)
 
     static let accent = Color(red: 0.17, green: 0.73, blue: 0.79)
     static let accentSoft = Color(red: 0.12, green: 0.31, blue: 0.34)
@@ -21,21 +21,20 @@ enum AppColors {
 
     static let screenGradient = LinearGradient(
         colors: [
-            Color(red: 0.06, green: 0.08, blue: 0.10),
             background,
-            backgroundSecondary
+            background
         ],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
+        startPoint: .top,
+        endPoint: .bottom
     )
 
     static let cardGradient = LinearGradient(
         colors: [
-            surfaceRaised.opacity(0.98),
+            surfaceRaised,
             surface
         ],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
+        startPoint: .top,
+        endPoint: .bottom
     )
 
     static let heroGradient = LinearGradient(

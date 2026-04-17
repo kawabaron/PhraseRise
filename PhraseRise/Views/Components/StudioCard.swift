@@ -13,33 +13,28 @@ struct StudioCard<Content: View>: View {
     }
 
     var body: some View {
-        content
-            .padding(AppSpacing.medium)
-            .background(cardBackground)
-            .overlay(alignment: .topLeading) {
-                if let emphasisColor {
-                    Capsule()
-                        .fill(emphasisColor.opacity(0.92))
-                        .frame(width: 52, height: 6)
-                        .padding(.top, 14)
-                        .padding(.leading, AppSpacing.medium)
-                }
+        HStack(spacing: 0) {
+            if let emphasisColor {
+                Rectangle()
+                    .fill(emphasisColor)
+                    .frame(width: 3)
             }
-            .shadow(color: AppColors.shadow, radius: 18, x: 0, y: 10)
+
+            content
+                .padding(AppSpacing.medium)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .background(cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: AppCorners.card, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: AppCorners.card, style: .continuous)
+                .stroke(AppColors.border, lineWidth: 1)
+        )
+        .shadow(color: AppColors.shadow, radius: 14, x: 0, y: 6)
     }
 
     private var cardBackground: some View {
-        RoundedRectangle(cornerRadius: AppCorners.card, style: .continuous)
-            .fill(AppColors.cardGradient)
-            .overlay(
-                RoundedRectangle(cornerRadius: AppCorners.card, style: .continuous)
-                    .stroke(AppColors.border, lineWidth: 1)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: AppCorners.card, style: .continuous)
-                    .stroke(Color.white.opacity(0.04), lineWidth: 1)
-                    .blur(radius: 1)
-            )
+        AppColors.cardGradient
     }
 }
 
@@ -56,6 +51,7 @@ struct StudioSectionHeader: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
                 .font(AppTypography.sectionTitle)
+                .foregroundStyle(AppColors.textPrimary)
             if let subtitle {
                 Text(subtitle)
                     .font(AppTypography.caption)

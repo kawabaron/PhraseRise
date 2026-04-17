@@ -7,17 +7,18 @@ struct MetricTile: View {
 
     var body: some View {
         StudioCard(emphasisColor: tint) {
-            VStack(alignment: .leading, spacing: 10) {
-                Text(title.uppercased())
+            VStack(alignment: .leading, spacing: 6) {
+                Text(title)
                     .font(AppTypography.eyebrow)
-                    .foregroundStyle(AppColors.textSecondary)
+                    .foregroundStyle(AppColors.textMuted)
+                    .textCase(.uppercase)
+                    .tracking(0.6)
 
                 Text(value)
                     .font(AppTypography.metric)
-
-                Capsule()
-                    .fill(tint)
-                    .frame(width: 44, height: 6)
+                    .foregroundStyle(AppColors.textPrimary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
