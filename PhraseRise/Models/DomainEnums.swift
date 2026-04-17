@@ -1,0 +1,79 @@
+import Foundation
+import SwiftUI
+
+enum SongSourceType: String, Codable, CaseIterable, Identifiable {
+    case imported
+    case micRecorded
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .imported:
+            return "Files から追加"
+        case .micRecorded:
+            return "練習音源を録音"
+        }
+    }
+}
+
+enum PhraseStatus: String, Codable, CaseIterable, Identifiable {
+    case active
+    case mastered
+    case archived
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .active:
+            return "練習中"
+        case .mastered:
+            return "達成"
+        case .archived:
+            return "保管"
+        }
+    }
+
+    var tint: Color {
+        switch self {
+        case .active:
+            return AppColors.accent
+        case .mastered:
+            return AppColors.success
+        case .archived:
+            return AppColors.warning
+        }
+    }
+}
+
+enum PracticeResultType: String, Codable, CaseIterable, Identifiable {
+    case stable
+    case barely
+    case failed
+
+    var id: String { rawValue }
+
+    var label: String {
+        rawValue
+    }
+
+    var tint: Color {
+        switch self {
+        case .stable:
+            return AppColors.success
+        case .barely:
+            return AppColors.warning
+        case .failed:
+            return AppColors.recording
+        }
+    }
+}
+
+enum SubscriptionProductType: String, Codable, CaseIterable, Identifiable {
+    case none
+    case lifetime
+    case monthly
+
+    var id: String { rawValue }
+}
