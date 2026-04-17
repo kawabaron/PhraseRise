@@ -11,7 +11,7 @@ final class PracticePlayerViewModel {
     private let phraseLoopService: PhraseLoopService
     private let performanceRecordingRepository: PerformanceRecordingRepository
 
-    private var progressTimer: Timer?
+    private nonisolated(unsafe) var progressTimer: Timer?
     private let referenceBpm: Int
 
     var isPlaying = false
@@ -35,11 +35,12 @@ final class PracticePlayerViewModel {
         performanceRecordingRepository = dependencies.performanceRecordingRepository
 
         let initialRange = dependencies.phraseLoopService.initialRange(for: phrase, song: song)
+        let initialBpm = phrase.recommendedStartBpm ?? phrase.lastStableBpm ?? phrase.targetBpm ?? 88
         loopRange = initialRange
         currentTimeSec = initialRange.lowerBound
-        bpm = phrase.recommendedStartBpm ?? phrase.lastStableBpm ?? phrase.targetBpm ?? 88
+        bpm = initialBpm
         isLoopEnabled = dependencies.settingsRepository.loadOrCreate().defaultLoopEnabled
-        referenceBpm = max(40, phrase.targetBpm ?? phrase.bestStableBpm ?? phrase.lastStableBpm ?? bpm)
+        referenceBpm = max(40, phrase.targetBpm ?? phrase.bestStableBpm ?? phrase.lastStableBpm ?? initialBpm)
 
         hasLatestRecording = false
         latestRecordingSummary = "演奏録音はまだありません"

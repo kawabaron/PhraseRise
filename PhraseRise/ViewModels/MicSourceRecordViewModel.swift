@@ -9,7 +9,7 @@ final class MicSourceRecordViewModel {
     private let draftRepository: SourceCaptureDraftRepository
     private let settingsRepository: SettingsRepository
 
-    private var refreshTimer: Timer?
+    private nonisolated(unsafe) var refreshTimer: Timer?
 
     var permissionState: MicrophonePermissionState
     var isRecording = false

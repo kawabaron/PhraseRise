@@ -25,7 +25,6 @@ final class AppDependencies {
     let fileImportService: FileImportService
     let suggestionEngine: PracticeSuggestionEngine
     let subscriptionService: SubscriptionService
-    let sampleDataSeeder: SampleDataSeeder
 
     init(context: ModelContext) {
         songRepository = SongRepository(context: context)
@@ -68,18 +67,23 @@ final class AppDependencies {
             songRepository: songRepository,
             waveformAnalysisService: waveformAnalysisService
         )
-        sampleDataSeeder = SampleDataSeeder(
-            songRepository: songRepository,
-            phraseRepository: phraseRepository,
-            practiceRecordRepository: practiceRecordRepository,
-            performanceRecordingRepository: performanceRecordingRepository,
-            settingsRepository: settingsRepository,
-            subscriptionRepository: subscriptionRepository,
-            suggestionEngine: suggestionEngine
-        )
     }
 
     func bootstrap() {
-        sampleDataSeeder.seedIfNeeded()
+        _ = settingsRepository.loadOrCreate()
+        _ = subscriptionRepository.loadOrCreate()
+        removeLegacySampleDataIfNeeded()
+    }
+
+    private func removeLegacySampleDataIfNeeded() {
+        for song in songRepository.fetchAll() where isLegacySampleData(song) {
+            songDeletionService.deleteSong(song)
+        }
+    }
+
+    private func isLegacySampleData(_ song: Song) -> Bool {
+        song.title == "Blue Riff Study" &&
+        song.artistName == "PhraseRise Demo" &&
+        song.localFileURL.path == "/tmp/blueriff-demo.m4a"
     }
 }
