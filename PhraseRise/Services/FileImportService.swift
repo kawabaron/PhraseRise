@@ -4,10 +4,12 @@ import Foundation
 @MainActor
 final class FileImportService {
     private let songRepository: SongRepository
+    private let waveformAnalysisService: WaveformAnalysisService
     private let fileManager = FileManager.default
 
-    init(songRepository: SongRepository) {
+    init(songRepository: SongRepository, waveformAnalysisService: WaveformAnalysisService) {
         self.songRepository = songRepository
+        self.waveformAnalysisService = waveformAnalysisService
     }
 
     func importSong(from sourceURL: URL) throws -> Song {
@@ -18,15 +20,15 @@ final class FileImportService {
             }
         }
 
-        let songsDirectory = try ensureSongsDirectory()
+        let songsDirectory = try AudioFileStorage.songsDirectory(fileManager: fileManager)
         let fileExtension = sourceURL.pathExtension.isEmpty ? "m4a" : sourceURL.pathExtension
-        let destinationURL = songsDirectory.appendingPathComponent("\(UUID().uuidString).\(fileExtension)")
+        let destinationURL = AudioFileStorage.uniqueAudioFileURL(in: songsDirectory, fileExtension: fileExtension)
 
         try fileManager.copyItem(at: sourceURL, to: destinationURL)
 
-        let asset = AVURLAsset(url: destinationURL)
-        let durationSec = max(0, CMTimeGetSeconds(asset.duration))
-        let waveform = makePlaceholderWaveform(for: destinationURL)
+        let durationSec = waveformAnalysisService.durationSec(for: destinationURL)
+        let waveform = (try? waveformAnalysisService.analyzeWaveform(url: destinationURL, sampleCount: 64))
+            ?? makePlaceholderWaveform(for: destinationURL)
 
         return songRepository.create(
             title: sourceURL.deletingPathExtension().lastPathComponent,
@@ -35,20 +37,6 @@ final class FileImportService {
             sourceType: .imported,
             waveformOverview: waveform
         )
-    }
-
-    private func ensureSongsDirectory() throws -> URL {
-        let appSupport = try fileManager.url(
-            for: .applicationSupportDirectory,
-            in: .userDomainMask,
-            appropriateFor: nil,
-            create: true
-        )
-        let directory = appSupport.appendingPathComponent("PhraseRise/Songs", isDirectory: true)
-        if !fileManager.fileExists(atPath: directory.path) {
-            try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
-        }
-        return directory
     }
 
     private func makePlaceholderWaveform(for fileURL: URL) -> [Double] {

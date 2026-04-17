@@ -10,7 +10,13 @@ final class AppDependencies {
     let performanceRecordingRepository: PerformanceRecordingRepository
     let settingsRepository: SettingsRepository
     let subscriptionRepository: SubscriptionRepository
+    let sourceCaptureDraftRepository: SourceCaptureDraftRepository
 
+    let audioSessionCoordinator: AudioSessionCoordinator
+    let waveformAnalysisService: WaveformAnalysisService
+    let sourceCaptureService: SourceCaptureService
+    let sourceSongCreationService: SourceSongCreationService
+    let audioPreviewService: AudioPreviewService
     let fileImportService: FileImportService
     let suggestionEngine: PracticeSuggestionEngine
     let subscriptionService: SubscriptionService
@@ -23,7 +29,20 @@ final class AppDependencies {
         performanceRecordingRepository = PerformanceRecordingRepository(context: context)
         settingsRepository = SettingsRepository(context: context)
         subscriptionRepository = SubscriptionRepository(context: context)
-        fileImportService = FileImportService(songRepository: songRepository)
+        sourceCaptureDraftRepository = SourceCaptureDraftRepository(context: context)
+        audioSessionCoordinator = AudioSessionCoordinator()
+        waveformAnalysisService = WaveformAnalysisService()
+        sourceCaptureService = SourceCaptureService(audioSessionCoordinator: audioSessionCoordinator)
+        sourceSongCreationService = SourceSongCreationService(
+            songRepository: songRepository,
+            draftRepository: sourceCaptureDraftRepository,
+            waveformAnalysisService: waveformAnalysisService
+        )
+        audioPreviewService = AudioPreviewService(audioSessionCoordinator: audioSessionCoordinator)
+        fileImportService = FileImportService(
+            songRepository: songRepository,
+            waveformAnalysisService: waveformAnalysisService
+        )
         suggestionEngine = PracticeSuggestionEngine()
         subscriptionService = SubscriptionService(subscriptionRepository: subscriptionRepository)
         sampleDataSeeder = SampleDataSeeder(

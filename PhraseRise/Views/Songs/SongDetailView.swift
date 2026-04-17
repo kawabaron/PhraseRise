@@ -37,6 +37,15 @@ struct SongDetailView: View {
                 }
 
                 StudioSectionHeader("フレーズ")
+
+                NavigationLink {
+                    PhraseEditorView(song: viewModel.song, dependencies: dependencies)
+                } label: {
+                    Label("新しい Phrase を追加", systemImage: "plus.circle")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(FilledStudioButtonStyle(tint: AppColors.accent))
+
                 ForEach(viewModel.phrases, id: \.id) { phrase in
                     StudioCard {
                         VStack(alignment: .leading, spacing: 10) {
@@ -62,7 +71,7 @@ struct SongDetailView: View {
                                 .buttonStyle(FilledStudioButtonStyle(tint: AppColors.surfaceRaised))
 
                                 NavigationLink("編集") {
-                                    PhraseEditorView(song: viewModel.song, phrase: phrase)
+                                    PhraseEditorView(song: viewModel.song, phrase: phrase, dependencies: dependencies)
                                 }
                                 .buttonStyle(FilledStudioButtonStyle(tint: AppColors.accentMuted))
 
@@ -81,5 +90,8 @@ struct SongDetailView: View {
         }
         .navigationTitle("Song Detail")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            viewModel.refresh()
+        }
     }
 }

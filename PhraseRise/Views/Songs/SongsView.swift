@@ -1,16 +1,26 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-private enum SourceSheetRoute: String, Identifiable {
+private enum SourceSheetRoute: Identifiable, Equatable {
     case methodPicker
     case micRecorder
-    case saveConfirm
+    case saveConfirm(UUID)
 
-    var id: String { rawValue }
+    var id: String {
+        switch self {
+        case .methodPicker:
+            return "methodPicker"
+        case .micRecorder:
+            return "micRecorder"
+        case let .saveConfirm(draftID):
+            return "saveConfirm-\(draftID.uuidString)"
+        }
+    }
 }
 
 struct SongsView: View {
     let dependencies: AppDependencies
+
     @State private var viewModel: SongsViewModel
     @State private var route: SourceSheetRoute?
     @State private var showingFileImporter = false
@@ -40,10 +50,15 @@ struct SongsView: View {
                                             .font(AppTypography.caption)
                                             .foregroundStyle(AppColors.textSecondary)
                                     }
+
                                     Spacer()
-                                    Label(song.sourceType == .micRecorded ? "mic" : "file", systemImage: song.sourceType == .micRecorded ? "mic.fill" : "folder")
-                                        .font(AppTypography.caption)
-                                        .foregroundStyle(song.sourceType == .micRecorded ? AppColors.recording : AppColors.accent)
+
+                                    Label(
+                                        song.sourceType == .micRecorded ? "mic" : "file",
+                                        systemImage: song.sourceType == .micRecorded ? "mic.fill" : "folder"
+                                    )
+                                    .font(AppTypography.caption)
+                                    .foregroundStyle(song.sourceType == .micRecorded ? AppColors.recording : AppColors.accent)
                                 }
 
                                 HStack {
@@ -85,15 +100,19 @@ struct SongsView: View {
                             showingFileImporter = true
                         }
                     },
-                    onPickMicRecording: { route = .micRecorder }
+                    onPickMicRecording: {
+                        route = .micRecorder
+                    }
                 )
                 .presentationDetents([.medium])
+
             case .micRecorder:
-                MicSourceRecordView {
-                    route = .saveConfirm
+                MicSourceRecordView(dependencies: dependencies) { draftID in
+                    route = .saveConfirm(draftID)
                 }
-            case .saveConfirm:
-                SourceSaveConfirmView {
+
+            case let .saveConfirm(draftID):
+                SourceSaveConfirmView(draftID: draftID, dependencies: dependencies) { _ in
                     route = nil
                     viewModel.refresh()
                 }
@@ -113,14 +132,17 @@ struct SongsView: View {
                 importErrorMessage = error.localizedDescription
             }
         }
-        .alert("読み込みエラー", isPresented: Binding(
-            get: { importErrorMessage != nil },
-            set: { isPresented in
-                if !isPresented {
-                    importErrorMessage = nil
+        .alert(
+            "読み込みエラー",
+            isPresented: Binding(
+                get: { importErrorMessage != nil },
+                set: { isPresented in
+                    if !isPresented {
+                        importErrorMessage = nil
+                    }
                 }
-            }
-        )) {
+            )
+        ) {
             Button("閉じる", role: .cancel) { }
         } message: {
             Text(importErrorMessage ?? "不明なエラー")
