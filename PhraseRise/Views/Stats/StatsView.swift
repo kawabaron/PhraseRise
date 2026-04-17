@@ -26,7 +26,7 @@ struct StatsView: View {
 
                 StudioSectionHeader("BPM 推移")
 
-                StudioCard {
+                StudioCard(emphasisColor: AppColors.accent) {
                     if viewModel.recentStableTrend.isEmpty {
                         Text("練習記録が増えると、ここに BPM 推移が表示されます。")
                             .foregroundStyle(AppColors.textSecondary)
@@ -69,6 +69,7 @@ struct StatsView: View {
             .padding(.bottom, 120)
         }
         .navigationTitle("Stats")
+        .studioScreen()
         .task {
             viewModel.refresh()
         }

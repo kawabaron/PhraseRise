@@ -5,13 +5,13 @@ struct PhraseSummaryCard: View {
 
     var body: some View {
         HStack(spacing: AppSpacing.medium) {
-            RoundedRectangle(cornerRadius: 6, style: .continuous)
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .fill(snapshot.phrase.status.tint)
-                .frame(width: 8)
+                .frame(width: 10)
 
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 12) {
                 HStack(alignment: .top) {
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: 5) {
                         Text(snapshot.phrase.name)
                             .font(AppTypography.cardTitle)
                         Text(snapshot.song.title)
@@ -21,10 +21,13 @@ struct PhraseSummaryCard: View {
 
                     Spacer()
 
-                    if snapshot.hasRecording {
-                        Label("演奏録音あり", systemImage: "waveform.badge.mic")
-                            .font(AppTypography.caption)
-                            .foregroundStyle(AppColors.accent)
+                    VStack(alignment: .trailing, spacing: 6) {
+                        statusPill(snapshot.phrase.status.label, tint: snapshot.phrase.status.tint)
+                        if snapshot.hasRecording {
+                            Label("演奏録音あり", systemImage: "waveform.badge.mic")
+                                .font(AppTypography.caption)
+                                .foregroundStyle(AppColors.accent)
+                        }
                     }
                 }
 
@@ -40,7 +43,7 @@ struct PhraseSummaryCard: View {
         .padding(AppSpacing.medium)
         .background(
             RoundedRectangle(cornerRadius: AppCorners.card, style: .continuous)
-                .fill(AppColors.surfaceRaised)
+                .fill(AppColors.cardGradient)
                 .overlay(
                     RoundedRectangle(cornerRadius: AppCorners.card, style: .continuous)
                         .stroke(AppColors.border, lineWidth: 1)
@@ -49,7 +52,7 @@ struct PhraseSummaryCard: View {
     }
 
     private func metric(title: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: 4) {
             Text(title)
                 .font(AppTypography.caption)
                 .foregroundStyle(AppColors.textMuted)
@@ -58,8 +61,17 @@ struct PhraseSummaryCard: View {
         }
     }
 
+    private func statusPill(_ title: String, tint: Color) -> some View {
+        Text(title)
+            .font(AppTypography.caption)
+            .foregroundStyle(.white)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(tint.opacity(0.85), in: Capsule())
+    }
+
     private func bpmText(_ bpm: Int?) -> String {
         guard let bpm else { return "--" }
-        return "\(bpm)"
+        return "\(bpm) BPM"
     }
 }

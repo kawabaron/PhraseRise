@@ -13,58 +13,38 @@ struct PhraseEditorView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: AppSpacing.large) {
-                StudioSectionHeader("Phrase を作成", subtitle: "A/B を決めて、難所フレーズとして保存します。")
+                StudioSectionHeader("Phrase を作成", subtitle: "A/B 範囲を決めて、難所フレーズとして保存します。")
 
-                WaveformPlaceholderView(
-                    values: viewModel.waveformValues,
-                    selection: viewModel.startRatio ... viewModel.endRatio
-                )
-                .frame(height: 220)
+                StudioCard(emphasisColor: AppColors.accent) {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("波形を見ながら範囲を調整")
+                            .font(AppTypography.cardTitle)
+
+                        WaveformPlaceholderView(
+                            values: viewModel.waveformValues,
+                            selection: viewModel.startRatio ... viewModel.endRatio
+                        )
+                        .frame(height: 220)
+                    }
+                }
 
                 StudioCard {
                     VStack(alignment: .leading, spacing: 14) {
-                        Text("範囲を調整")
-                            .font(AppTypography.cardTitle)
+                        rangeEditor(
+                            title: "開始位置",
+                            value: $viewModel.startRatio,
+                            range: 0 ... max(viewModel.endRatio - 0.02, 0.01),
+                            onMinus: { viewModel.nudgeStart(by: -0.1) },
+                            onPlus: { viewModel.nudgeStart(by: 0.1) }
+                        )
 
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("開始位置")
-                                .font(AppTypography.caption)
-                                .foregroundStyle(AppColors.textSecondary)
-                            Slider(value: $viewModel.startRatio, in: 0 ... max(viewModel.endRatio - 0.02, 0.01))
-                                .tint(AppColors.accent)
-
-                            HStack {
-                                Button("-0.1s") {
-                                    viewModel.nudgeStart(by: -0.1)
-                                }
-                                .buttonStyle(FilledStudioButtonStyle(tint: AppColors.surfaceRaised))
-
-                                Button("+0.1s") {
-                                    viewModel.nudgeStart(by: 0.1)
-                                }
-                                .buttonStyle(FilledStudioButtonStyle(tint: AppColors.surfaceRaised))
-                            }
-                        }
-
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("終了位置")
-                                .font(AppTypography.caption)
-                                .foregroundStyle(AppColors.textSecondary)
-                            Slider(value: $viewModel.endRatio, in: min(viewModel.startRatio + 0.02, 0.99) ... 1)
-                                .tint(AppColors.accent)
-
-                            HStack {
-                                Button("-0.1s") {
-                                    viewModel.nudgeEnd(by: -0.1)
-                                }
-                                .buttonStyle(FilledStudioButtonStyle(tint: AppColors.surfaceRaised))
-
-                                Button("+0.1s") {
-                                    viewModel.nudgeEnd(by: 0.1)
-                                }
-                                .buttonStyle(FilledStudioButtonStyle(tint: AppColors.surfaceRaised))
-                            }
-                        }
+                        rangeEditor(
+                            title: "終了位置",
+                            value: $viewModel.endRatio,
+                            range: min(viewModel.startRatio + 0.02, 0.99) ... 1,
+                            onMinus: { viewModel.nudgeEnd(by: -0.1) },
+                            onPlus: { viewModel.nudgeEnd(by: 0.1) }
+                        )
                     }
                 }
 
@@ -103,6 +83,7 @@ struct PhraseEditorView: View {
         }
         .navigationTitle("Phrase Editor")
         .navigationBarTitleDisplayMode(.inline)
+        .studioScreen()
         .sheet(
             isPresented: Binding(
                 get: { viewModel.shouldShowPaywall },
@@ -132,6 +113,30 @@ struct PhraseEditorView: View {
         }
     }
 
+    private func rangeEditor(
+        title: String,
+        value: Binding<Double>,
+        range: ClosedRange<Double>,
+        onMinus: @escaping () -> Void,
+        onPlus: @escaping () -> Void
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(AppTypography.caption)
+                .foregroundStyle(AppColors.textSecondary)
+
+            Slider(value: value, in: range)
+                .tint(AppColors.accent)
+
+            HStack {
+                Button("-0.1s", action: onMinus)
+                    .buttonStyle(FilledStudioButtonStyle(tint: AppColors.surfaceGlass))
+                Button("+0.1s", action: onPlus)
+                    .buttonStyle(FilledStudioButtonStyle(tint: AppColors.surfaceGlass))
+            }
+        }
+    }
+
     private func textField(title: String, text: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
@@ -142,7 +147,7 @@ struct PhraseEditorView: View {
                 .padding(14)
                 .background(
                     RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .fill(AppColors.backgroundSecondary)
+                        .fill(AppColors.surfaceGlass.opacity(0.78))
                 )
         }
     }
@@ -159,7 +164,7 @@ struct PhraseEditorView: View {
         .padding(.vertical, 10)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(AppColors.surfaceRaised)
+                .fill(AppColors.surfaceGlass.opacity(0.82))
         )
     }
 }

@@ -13,7 +13,15 @@ struct PaywallView: View {
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: AppSpacing.large) {
-                StudioSectionHeader("PhraseRise Premium", subtitle: "録音を貯めて比較しながら、難所フレーズを無制限に管理できます。")
+                StudioCard(emphasisColor: AppColors.accent) {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("PhraseRise Premium")
+                            .font(AppTypography.screenTitle)
+                        Text("録音を貯めて比較しながら、難所フレーズを無制限に管理できます。")
+                            .font(AppTypography.body)
+                            .foregroundStyle(AppColors.textSecondary)
+                    }
+                }
 
                 if let message {
                     StudioCard {
@@ -44,13 +52,13 @@ struct PaywallView: View {
                     Button("無料版に戻す") {
                         viewModel.restoreFree()
                     }
-                    .buttonStyle(FilledStudioButtonStyle(tint: AppColors.surfaceRaised))
+                    .buttonStyle(FilledStudioButtonStyle(tint: AppColors.surfaceGlass))
                 }
 
                 Button("閉じる") {
                     dismiss()
                 }
-                .buttonStyle(FilledStudioButtonStyle(tint: AppColors.accentMuted))
+                .buttonStyle(FilledStudioButtonStyle(tint: AppColors.accentSoft))
 
                 Spacer()
             }

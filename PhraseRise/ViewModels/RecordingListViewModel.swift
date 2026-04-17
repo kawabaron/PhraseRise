@@ -41,7 +41,7 @@ final class RecordingListViewModel {
     }
 
     var compareTitle: String {
-        canCompare ? "比較再生を切り替える" : "2件選ぶと比較再生できます"
+        canCompare ? "比較対象を切り替えながら聞けます" : "2件選ぶと比較再生できます"
     }
 
     func refresh() {

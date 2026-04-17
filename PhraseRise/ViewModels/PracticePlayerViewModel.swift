@@ -66,6 +66,14 @@ final class PracticePlayerViewModel {
         phraseLoopService.headRatio(currentTimeSec: currentTimeSec, songDurationSec: song.durationSec)
     }
 
+    var loopDurationLabel: String {
+        Formatting.duration(loopRange.upperBound - loopRange.lowerBound)
+    }
+
+    var targetBpmLabel: String {
+        phrase.targetBpm.map { "\($0) BPM" } ?? "--"
+    }
+
     func handleAppear() {
         audioPlaybackService.setCursor(loopRange.lowerBound)
         currentTimeSec = loopRange.lowerBound

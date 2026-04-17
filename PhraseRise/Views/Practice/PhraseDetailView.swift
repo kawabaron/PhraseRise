@@ -27,20 +27,38 @@ struct PhraseDetailView: View {
         }
         .navigationTitle("Phrase Detail")
         .navigationBarTitleDisplayMode(.inline)
+        .studioScreen()
         .task {
             viewModel.refresh()
         }
     }
 
     private var headerCard: some View {
-        StudioCard {
-            VStack(alignment: .leading, spacing: 10) {
-                Text(viewModel.song.title)
-                    .font(AppTypography.caption)
-                    .foregroundStyle(AppColors.textSecondary)
+        StudioCard(emphasisColor: viewModel.phrase.status.tint) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(viewModel.song.title)
+                            .font(AppTypography.caption)
+                            .foregroundStyle(AppColors.textSecondary)
 
-                Text(viewModel.phrase.name)
-                    .font(AppTypography.screenTitle)
+                        Text(viewModel.phrase.name)
+                            .font(AppTypography.screenTitle)
+                    }
+
+                    Spacer()
+
+                    Text(viewModel.phrase.status.label)
+                        .font(AppTypography.caption)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(viewModel.phrase.status.tint.opacity(0.9), in: Capsule())
+                }
+
+                HStack {
+                    detailPill("範囲", value: "\(Formatting.duration(viewModel.phrase.startTimeSec)) - \(Formatting.duration(viewModel.phrase.endTimeSec))")
+                    detailPill("目標", value: bpmText(viewModel.phrase.targetBpm))
+                }
 
                 if let memo = viewModel.phrase.memo, !memo.isEmpty {
                     Text(memo)
@@ -56,12 +74,12 @@ struct PhraseDetailView: View {
             MetricTile(title: "前回 stable", value: bpmText(viewModel.phrase.lastStableBpm), tint: AppColors.accent)
             MetricTile(title: "最高 stable", value: bpmText(viewModel.phrase.bestStableBpm), tint: AppColors.success)
             MetricTile(title: "stable率", value: "\(viewModel.stableRate)%", tint: AppColors.warning)
-            MetricTile(title: "練習時間", value: "\(viewModel.totalPracticeMinutes) 分", tint: AppColors.accentMuted)
+            MetricTile(title: "練習時間", value: "\(viewModel.totalPracticeMinutes) 分", tint: AppColors.accentSoft)
         }
     }
 
     private var suggestionCard: some View {
-        StudioCard {
+        StudioCard(emphasisColor: AppColors.accent) {
             VStack(alignment: .leading, spacing: 10) {
                 Label("次回提案", systemImage: "arrow.up.forward.circle.fill")
                     .font(AppTypography.cardTitle)
@@ -81,7 +99,8 @@ struct PhraseDetailView: View {
 
     private var chartSection: some View {
         VStack(alignment: .leading, spacing: AppSpacing.medium) {
-            StudioSectionHeader("BPM 推移")
+            StudioSectionHeader("BPM 推移", subtitle: "上達の流れを最初に見える位置へ。")
+
             StudioCard {
                 if viewModel.chartPoints.isEmpty {
                     Text("PracticeRecord を保存するとグラフが表示されます。")
@@ -89,6 +108,12 @@ struct PhraseDetailView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                 } else {
                     Chart(viewModel.chartPoints) { point in
+                        AreaMark(
+                            x: .value("Date", point.label),
+                            y: .value("BPM", point.bpm)
+                        )
+                        .foregroundStyle(AppColors.accent.opacity(0.12))
+
                         LineMark(
                             x: .value("Date", point.label),
                             y: .value("BPM", point.bpm)
@@ -118,8 +143,8 @@ struct PhraseDetailView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
             } else {
-                ForEach(viewModel.practiceRecords.prefix(8), id: \.id) { record in
-                    StudioCard {
+                ForEach(viewModel.practiceRecords.prefix(6), id: \.id) { record in
+                    StudioCard(emphasisColor: record.resultType.tint) {
                         VStack(alignment: .leading, spacing: 10) {
                             HStack {
                                 Text("\(record.triedBpm) BPM")
@@ -129,7 +154,7 @@ struct PhraseDetailView: View {
                                     .font(AppTypography.caption)
                                     .padding(.horizontal, 10)
                                     .padding(.vertical, 6)
-                                    .background(record.resultType.tint.opacity(0.2), in: Capsule())
+                                    .background(record.resultType.tint.opacity(0.18), in: Capsule())
                             }
 
                             HStack {
@@ -159,7 +184,7 @@ struct PhraseDetailView: View {
             NavigationLink {
                 RecordingListView(phrase: viewModel.phrase, song: viewModel.song, dependencies: dependencies)
             } label: {
-                StudioCard {
+                StudioCard(emphasisColor: AppColors.recording) {
                     HStack {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("録音一覧を開く")
@@ -186,6 +211,22 @@ struct PhraseDetailView: View {
                 .frame(maxWidth: .infinity)
         }
         .buttonStyle(FilledStudioButtonStyle(tint: AppColors.accent))
+    }
+
+    private func detailPill(_ title: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(AppTypography.caption)
+                .foregroundStyle(AppColors.textMuted)
+            Text(value)
+                .font(.system(.subheadline, design: .rounded).weight(.semibold))
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(AppColors.surfaceGlass.opacity(0.82))
+        )
     }
 
     private func bpmText(_ bpm: Int?) -> String {

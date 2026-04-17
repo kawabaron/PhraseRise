@@ -19,14 +19,7 @@ struct PracticePlayerView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: AppSpacing.large) {
                 headerCard
-
-                WaveformPlaceholderView(
-                    values: song.waveformOverview.isEmpty ? Array(repeating: 0.42, count: 52) : song.waveformOverview,
-                    selection: viewModel.selectionRatio,
-                    headPosition: viewModel.headRatio
-                )
-                .frame(height: 260)
-
+                waveformCard
                 transportCard
                 loopCard
                 actionRow
@@ -37,6 +30,7 @@ struct PracticePlayerView: View {
         }
         .navigationTitle("Practice")
         .navigationBarTitleDisplayMode(.inline)
+        .studioScreen()
         .sheet(isPresented: $isPresentingRecordSheet) {
             PracticeRecordSheet(phrase: phrase, initialBpm: viewModel.bpm, dependencies: dependencies)
         }
@@ -76,49 +70,90 @@ struct PracticePlayerView: View {
     }
 
     private var headerCard: some View {
-        StudioCard {
+        StudioCard(emphasisColor: AppColors.accent) {
             VStack(alignment: .leading, spacing: 14) {
-                Text(song.title)
-                    .font(AppTypography.caption)
-                    .foregroundStyle(AppColors.textSecondary)
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(song.title)
+                            .font(AppTypography.caption)
+                            .foregroundStyle(AppColors.textSecondary)
 
-                Text(phrase.name)
-                    .font(AppTypography.screenTitle)
-
-                HStack {
-                    metric("目標 BPM", value: phrase.targetBpm.map { "\($0)" } ?? "--")
-                    Spacer()
-                    metric("前回 stable", value: phrase.lastStableBpm.map { "\($0)" } ?? "--")
-                    Spacer()
-                    metric("今日の開始", value: phrase.recommendedStartBpm.map { "\($0)" } ?? "--")
-                }
-
-                HStack {
-                    Label("再生位置 \(Formatting.duration(viewModel.currentTimeSec))", systemImage: "play.fill")
-                    Spacer()
-                    if viewModel.isRecording {
-                        Label("演奏録音 \(Formatting.duration(viewModel.recordingElapsedSec))", systemImage: "record.circle.fill")
-                            .foregroundStyle(AppColors.recording)
-                    } else {
-                        Text(viewModel.latestRecordingSummary)
+                        Text(phrase.name)
+                            .font(AppTypography.screenTitle)
                     }
+
+                    Spacer()
+
+                    Text(phrase.status.label)
+                        .font(AppTypography.caption)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(phrase.status.tint.opacity(0.88), in: Capsule())
                 }
-                .font(AppTypography.caption)
-                .foregroundStyle(viewModel.isRecording ? AppColors.recording : (viewModel.hasLatestRecording ? AppColors.textSecondary : AppColors.textMuted))
+
+                HStack {
+                    infoPill("目標", value: viewModel.targetBpmLabel)
+                    infoPill("ループ長", value: viewModel.loopDurationLabel)
+                    infoPill("位置", value: Formatting.duration(viewModel.currentTimeSec))
+                }
+
+                if viewModel.isRecording {
+                    Label("演奏録音中 \(Formatting.duration(viewModel.recordingElapsedSec))", systemImage: "record.circle.fill")
+                        .font(AppTypography.caption)
+                        .foregroundStyle(AppColors.recording)
+                } else {
+                    Label(viewModel.latestRecordingSummary, systemImage: viewModel.hasLatestRecording ? "waveform.badge.mic" : "waveform")
+                        .font(AppTypography.caption)
+                        .foregroundStyle(viewModel.hasLatestRecording ? AppColors.textSecondary : AppColors.textMuted)
+                }
+            }
+        }
+    }
+
+    private var waveformCard: some View {
+        StudioCard {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text("ループ範囲")
+                        .font(AppTypography.cardTitle)
+                    Spacer()
+                    Text("\(Formatting.duration(viewModel.loopRange.lowerBound)) - \(Formatting.duration(viewModel.loopRange.upperBound))")
+                        .font(AppTypography.caption)
+                        .foregroundStyle(AppColors.textSecondary)
+                }
+
+                WaveformPlaceholderView(
+                    values: song.waveformOverview.isEmpty ? Array(repeating: 0.42, count: 52) : song.waveformOverview,
+                    selection: viewModel.selectionRatio,
+                    headPosition: viewModel.headRatio
+                )
+                .frame(height: 250)
             }
         }
     }
 
     private var transportCard: some View {
-        StudioCard {
+        StudioCard(emphasisColor: AppColors.accent) {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(alignment: .firstTextBaseline) {
-                    Text("\(viewModel.bpm) BPM")
-                        .font(AppTypography.bpmHero)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("\(viewModel.bpm) BPM")
+                            .font(AppTypography.bpmHero)
+                        Text("再生速度 \(viewModel.playbackRateLabel)")
+                            .font(AppTypography.caption)
+                            .foregroundStyle(AppColors.textSecondary)
+                    }
+
                     Spacer()
-                    Text("再生速度 \(viewModel.playbackRateLabel)")
-                        .font(.system(.headline, design: .rounded).weight(.semibold))
-                        .foregroundStyle(AppColors.accent)
+
+                    VStack(alignment: .trailing, spacing: 6) {
+                        Text("前回 stable \(phrase.lastStableBpm.map { "\($0)" } ?? "--")")
+                            .font(AppTypography.caption)
+                            .foregroundStyle(AppColors.textSecondary)
+                        Text("今日の開始 \(phrase.recommendedStartBpm.map { "\($0)" } ?? "--")")
+                            .font(AppTypography.caption)
+                            .foregroundStyle(AppColors.textSecondary)
+                    }
                 }
 
                 Stepper(
@@ -138,7 +173,7 @@ struct PracticePlayerView: View {
                     } label: {
                         Label("5秒戻る", systemImage: "gobackward.5")
                     }
-                    .buttonStyle(FilledStudioButtonStyle(tint: AppColors.surfaceRaised))
+                    .buttonStyle(FilledStudioButtonStyle(tint: AppColors.surfaceGlass))
 
                     Button {
                         viewModel.togglePlayback()
@@ -152,26 +187,28 @@ struct PracticePlayerView: View {
                     } label: {
                         Label("5秒進む", systemImage: "goforward.5")
                     }
-                    .buttonStyle(FilledStudioButtonStyle(tint: AppColors.surfaceRaised))
+                    .buttonStyle(FilledStudioButtonStyle(tint: AppColors.surfaceGlass))
                 }
             }
         }
     }
 
     private var loopCard: some View {
-        StudioCard {
+        StudioCard(emphasisColor: viewModel.isLoopEnabled ? AppColors.accent : AppColors.textMuted) {
             VStack(alignment: .leading, spacing: 14) {
                 HStack {
                     Label(viewModel.isLoopEnabled ? "ループ中" : "ループ停止", systemImage: "repeat")
                         .font(.system(.headline, design: .rounded).weight(.semibold))
                         .foregroundStyle(viewModel.isLoopEnabled ? AppColors.accent : AppColors.textSecondary)
+
                     Spacer()
+
                     Button {
                         viewModel.toggleLoop()
                     } label: {
                         Text(viewModel.isLoopEnabled ? "ループを解除" : "ループを有効")
                     }
-                    .buttonStyle(FilledStudioButtonStyle(tint: viewModel.isLoopEnabled ? AppColors.accentMuted : AppColors.surfaceRaised))
+                    .buttonStyle(FilledStudioButtonStyle(tint: viewModel.isLoopEnabled ? AppColors.accentSoft : AppColors.surfaceGlass))
                 }
 
                 HStack {
@@ -181,7 +218,9 @@ struct PracticePlayerView: View {
                         onMinus: { viewModel.nudgeLoopStart(by: -0.1) },
                         onPlus: { viewModel.nudgeLoopStart(by: 0.1) }
                     )
+
                     Spacer()
+
                     loopAdjuster(
                         title: "B",
                         value: Formatting.duration(viewModel.loopRange.upperBound),
@@ -205,6 +244,7 @@ struct PracticePlayerView: View {
                     Text(viewModel.isRecording ? "演奏録音を停止" : "演奏を録音")
                         .font(AppTypography.caption)
                 }
+                .frame(maxWidth: .infinity)
             }
             .buttonStyle(.plain)
 
@@ -218,25 +258,36 @@ struct PracticePlayerView: View {
                         .font(AppTypography.caption)
                         .foregroundStyle(AppColors.textSecondary)
                 }
-                .frame(maxWidth: .infinity, minHeight: 120, alignment: .leading)
+                .frame(maxWidth: .infinity, minHeight: 128, alignment: .leading)
                 .padding(AppSpacing.medium)
                 .background(
                     RoundedRectangle(cornerRadius: AppCorners.card, style: .continuous)
-                        .fill(AppColors.accent)
+                        .fill(AppColors.heroGradient)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: AppCorners.card, style: .continuous)
+                                .stroke(AppColors.border, lineWidth: 1)
+                        )
                 )
+                .shadow(color: AppColors.accent.opacity(0.20), radius: 18, x: 0, y: 10)
             }
             .buttonStyle(.plain)
         }
     }
 
-    private func metric(_ title: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
+    private func infoPill(_ title: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
             Text(title)
                 .font(AppTypography.caption)
-                .foregroundStyle(AppColors.textSecondary)
+                .foregroundStyle(AppColors.textMuted)
             Text(value)
-                .font(.system(.headline, design: .rounded).weight(.semibold))
+                .font(.system(.subheadline, design: .rounded).weight(.semibold))
         }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(AppColors.surfaceGlass.opacity(0.82))
+        )
     }
 
     private func loopAdjuster(
@@ -251,9 +302,9 @@ struct PracticePlayerView: View {
 
             HStack(spacing: AppSpacing.small) {
                 Button("-0.1s", action: onMinus)
-                    .buttonStyle(FilledStudioButtonStyle(tint: AppColors.surfaceRaised))
+                    .buttonStyle(FilledStudioButtonStyle(tint: AppColors.surfaceGlass))
                 Button("+0.1s", action: onPlus)
-                    .buttonStyle(FilledStudioButtonStyle(tint: AppColors.surfaceRaised))
+                    .buttonStyle(FilledStudioButtonStyle(tint: AppColors.surfaceGlass))
             }
         }
     }

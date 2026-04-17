@@ -39,6 +39,7 @@ struct RecordingListView: View {
         }
         .navigationTitle("Recordings")
         .navigationBarTitleDisplayMode(.inline)
+        .studioScreen()
         .sheet(
             isPresented: Binding(
                 get: { viewModel.paywallMessage != nil },
@@ -72,7 +73,7 @@ struct RecordingListView: View {
     }
 
     private var compareCard: some View {
-        StudioCard {
+        StudioCard(emphasisColor: AppColors.accent) {
             VStack(alignment: .leading, spacing: 12) {
                 Text("比較再生")
                     .font(AppTypography.cardTitle)
@@ -99,14 +100,14 @@ struct RecordingListView: View {
                     } label: {
                         Label("停止", systemImage: "stop.fill")
                     }
-                    .buttonStyle(FilledStudioButtonStyle(tint: AppColors.surfaceRaised))
+                    .buttonStyle(FilledStudioButtonStyle(tint: AppColors.surfaceGlass))
                 }
             }
         }
     }
 
     private func recordingCard(_ recording: PerformanceRecording) -> some View {
-        StudioCard {
+        StudioCard(emphasisColor: AppColors.recording) {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
@@ -153,9 +154,12 @@ struct RecordingListView: View {
                     Button {
                         viewModel.playSingle(recording)
                     } label: {
-                        Label(viewModel.playingRecordingID == recording.id ? "停止" : "演奏録音を聞く", systemImage: viewModel.playingRecordingID == recording.id ? "stop.fill" : "play.fill")
+                        Label(
+                            viewModel.playingRecordingID == recording.id ? "停止" : "演奏録音を聞く",
+                            systemImage: viewModel.playingRecordingID == recording.id ? "stop.fill" : "play.fill"
+                        )
                     }
-                    .buttonStyle(FilledStudioButtonStyle(tint: AppColors.surfaceRaised))
+                    .buttonStyle(FilledStudioButtonStyle(tint: AppColors.surfaceGlass))
 
                     Button {
                         viewModel.toggleSelection(recording)
@@ -165,7 +169,7 @@ struct RecordingListView: View {
                             systemImage: viewModel.selectedRecordingIDs.contains(recording.id) ? "checkmark.circle.fill" : "plus.circle"
                         )
                     }
-                    .buttonStyle(FilledStudioButtonStyle(tint: AppColors.accentMuted))
+                    .buttonStyle(FilledStudioButtonStyle(tint: AppColors.accentSoft))
 
                     Button {
                         viewModel.delete(recording)
@@ -191,7 +195,7 @@ struct RecordingListView: View {
         .padding(.vertical, 12)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(AppColors.surfaceRaised)
+                .fill(AppColors.surfaceGlass.opacity(0.84))
         )
     }
 }
