@@ -21,30 +21,31 @@ struct SourceSaveConfirmView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 0) {
-                    heroSection
+            VStack(spacing: 0) {
+                heroSection
 
-                    waveformBlock
-                        .padding(.top, AppSpacing.large)
-
-                    detailsBlock
-                        .padding(.top, AppSpacing.xLarge)
-
-                    actionRow
-                        .padding(.horizontal, AppSpacing.screenHorizontal)
-                        .padding(.top, AppSpacing.xLarge)
-
-                    Button("破棄") {
-                        viewModel.discardDraftIfNeeded()
-                        dismiss()
-                    }
-                    .font(AppTypography.body)
-                    .foregroundStyle(AppColors.textSecondary)
+                waveformBlock
                     .padding(.top, AppSpacing.medium)
+
+                Spacer(minLength: AppSpacing.medium)
+
+                detailsBlock
+
+                Spacer(minLength: AppSpacing.medium)
+
+                actionRow
+                    .padding(.horizontal, AppSpacing.screenHorizontal)
+
+                Button("破棄") {
+                    viewModel.discardDraftIfNeeded()
+                    dismiss()
                 }
-                .padding(.bottom, 60)
+                .font(AppTypography.body)
+                .foregroundStyle(AppColors.textSecondary)
+                .padding(.top, AppSpacing.small)
+                .padding(.bottom, AppSpacing.medium)
             }
+            .frame(maxHeight: .infinity)
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .studioScreen()
@@ -74,24 +75,20 @@ struct SourceSaveConfirmView: View {
     }
 
     private var heroSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 6) {
             Text("SAVE SOURCE")
                 .font(AppTypography.eyebrow)
                 .tracking(2)
                 .foregroundStyle(AppColors.recording)
 
             Text("練習音源を保存")
-                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .font(.system(size: 26, weight: .bold, design: .rounded))
                 .foregroundStyle(AppColors.textPrimary)
-
-            Text("録音した練習音源を確認して Song として保存します。")
-                .font(AppTypography.caption)
-                .foregroundStyle(AppColors.textSecondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, AppSpacing.screenHorizontal)
-        .padding(.top, AppSpacing.medium)
-        .padding(.bottom, AppSpacing.large)
+        .padding(.top, AppSpacing.small)
+        .padding(.bottom, AppSpacing.medium)
         .background(
             RadialGradient(
                 colors: [
@@ -108,7 +105,7 @@ struct SourceSaveConfirmView: View {
 
     private var waveformBlock: some View {
         WaveformPlaceholderView(values: viewModel.waveformValues, showHead: false)
-            .frame(height: 160)
+            .frame(height: 110)
             .padding(.horizontal, AppSpacing.screenHorizontal)
     }
 
@@ -116,31 +113,24 @@ struct SourceSaveConfirmView: View {
         VStack(alignment: .leading, spacing: AppSpacing.medium) {
             HStack(spacing: 10) {
                 detailPill(label: "録音時間", value: Formatting.duration(viewModel.draft?.durationSec ?? 0))
-                detailPill(label: "形式", value: "micRecorded")
                 Spacer(minLength: 0)
             }
-            .padding(.horizontal, AppSpacing.screenHorizontal)
 
-            VStack(alignment: .leading, spacing: 8) {
-                Text("音源名")
-                    .font(AppTypography.caption)
-                    .foregroundStyle(AppColors.textSecondary)
-                TextField("練習音源名", text: $viewModel.title)
-                    .textFieldStyle(.plain)
-                    .font(AppTypography.body)
-                    .foregroundStyle(AppColors.textPrimary)
-                    .padding(14)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(AppColors.surface.opacity(0.7))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .stroke(AppColors.border, lineWidth: 1)
-                    )
-            }
-            .padding(.horizontal, AppSpacing.screenHorizontal)
+            TextField("練習音源名", text: $viewModel.title)
+                .textFieldStyle(.plain)
+                .font(AppTypography.body)
+                .foregroundStyle(AppColors.textPrimary)
+                .padding(12)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(AppColors.surface.opacity(0.7))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(AppColors.border, lineWidth: 1)
+                )
         }
+        .padding(.horizontal, AppSpacing.screenHorizontal)
     }
 
     private var actionRow: some View {

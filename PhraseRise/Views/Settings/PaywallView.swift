@@ -12,28 +12,28 @@ struct PaywallView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 0) {
-                    heroSection
+            VStack(spacing: 0) {
+                heroSection
 
-                    if let message {
-                        Text(message)
-                            .font(AppTypography.body)
-                            .foregroundStyle(AppColors.textSecondary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal, AppSpacing.screenHorizontal)
-                            .padding(.top, AppSpacing.large)
-                    }
-
-                    featuresSection
-                        .padding(.top, AppSpacing.xLarge)
-
-                    actionStack
+                if let message {
+                    Text(message)
+                        .font(AppTypography.body)
+                        .foregroundStyle(AppColors.textSecondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.horizontal, AppSpacing.screenHorizontal)
-                        .padding(.top, AppSpacing.xLarge)
+                        .padding(.top, AppSpacing.medium)
                 }
-                .padding(.bottom, 60)
+
+                featuresSection
+                    .padding(.top, AppSpacing.medium)
+
+                Spacer(minLength: AppSpacing.medium)
+
+                actionStack
+                    .padding(.horizontal, AppSpacing.screenHorizontal)
+                    .padding(.bottom, AppSpacing.medium)
             }
+            .frame(maxHeight: .infinity)
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .studioScreen()
@@ -51,24 +51,20 @@ struct PaywallView: View {
     }
 
     private var heroSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 6) {
             Text("PHRASERISE")
                 .font(AppTypography.eyebrow)
                 .tracking(2)
                 .foregroundStyle(AppColors.textMuted)
 
             Text("Premium")
-                .font(.system(size: 56, weight: .bold, design: .rounded))
+                .font(.system(size: 38, weight: .bold, design: .rounded))
                 .foregroundStyle(AppColors.textPrimary)
-
-            Text("録音を貯めて比較しながら、難所の練習区間を無制限に管理できます。")
-                .font(AppTypography.body)
-                .foregroundStyle(AppColors.textSecondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, AppSpacing.screenHorizontal)
-        .padding(.top, AppSpacing.medium)
-        .padding(.bottom, AppSpacing.xLarge)
+        .padding(.top, AppSpacing.small)
+        .padding(.bottom, AppSpacing.medium)
         .background(
             RadialGradient(
                 colors: [
@@ -116,7 +112,7 @@ struct PaywallView: View {
             Spacer()
         }
         .padding(.horizontal, AppSpacing.screenHorizontal)
-        .padding(.vertical, 14)
+        .padding(.vertical, 10)
     }
 
     private var hairline: some View {

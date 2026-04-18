@@ -10,28 +10,28 @@ struct PracticeRecordSheet: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 0) {
-                    heroSection
+            VStack(spacing: 0) {
+                heroSection
 
-                    bpmField
-                        .padding(.top, AppSpacing.large)
+                bpmField
+                    .padding(.top, AppSpacing.medium)
 
-                    resultField
-                        .padding(.top, AppSpacing.xLarge)
+                resultField
+                    .padding(.top, AppSpacing.medium)
 
-                    durationField
-                        .padding(.top, AppSpacing.xLarge)
+                durationField
+                    .padding(.top, AppSpacing.medium)
 
-                    recordingLinkField
-                        .padding(.top, AppSpacing.xLarge)
+                recordingLinkField
+                    .padding(.top, AppSpacing.medium)
 
-                    memoField
-                        .padding(.top, AppSpacing.xLarge)
-                        .padding(.horizontal, AppSpacing.screenHorizontal)
-                }
-                .padding(.bottom, 60)
+                memoField
+                    .padding(.top, AppSpacing.medium)
+                    .padding(.horizontal, AppSpacing.screenHorizontal)
+
+                Spacer(minLength: AppSpacing.medium)
             }
+            .frame(maxHeight: .infinity)
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .studioScreen()
@@ -69,20 +69,20 @@ struct PracticeRecordSheet: View {
     }
 
     private var heroSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 6) {
             Text("PRACTICE RECORD")
                 .font(AppTypography.eyebrow)
                 .tracking(2)
                 .foregroundStyle(AppColors.textMuted)
 
             Text("練習を記録する")
-                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .font(.system(size: 26, weight: .bold, design: .rounded))
                 .foregroundStyle(AppColors.textPrimary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, AppSpacing.screenHorizontal)
-        .padding(.top, AppSpacing.medium)
-        .padding(.bottom, AppSpacing.large)
+        .padding(.top, AppSpacing.small)
+        .padding(.bottom, AppSpacing.medium)
         .background(
             RadialGradient(
                 colors: [
@@ -161,8 +161,8 @@ struct PracticeRecordSheet: View {
                 .textFieldStyle(.plain)
                 .font(AppTypography.body)
                 .foregroundStyle(AppColors.textPrimary)
-                .lineLimit(3 ... 8)
-                .padding(14)
+                .lineLimit(2 ... 4)
+                .padding(12)
                 .background(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
                         .fill(AppColors.surface.opacity(0.7))

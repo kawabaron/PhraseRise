@@ -20,33 +20,33 @@ struct MicSourceRecordView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 0) {
-                    heroSection
+            VStack(spacing: 0) {
+                heroSection
 
-                    if viewModel.permissionState == .denied {
-                        permissionBlock
-                            .padding(.horizontal, AppSpacing.screenHorizontal)
-                            .padding(.top, AppSpacing.large)
-                    } else {
-                        statusBlock
-                            .padding(.top, AppSpacing.large)
+                if viewModel.permissionState == .denied {
+                    permissionBlock
+                        .padding(.horizontal, AppSpacing.screenHorizontal)
+                        .padding(.top, AppSpacing.medium)
+                } else {
+                    statusBlock
+                        .padding(.top, AppSpacing.medium)
 
-                        controlButtons
-                            .padding(.horizontal, AppSpacing.screenHorizontal)
-                            .padding(.top, AppSpacing.xLarge)
-                    }
+                    Spacer(minLength: AppSpacing.medium)
 
-                    Button("破棄") {
-                        viewModel.discardCapture()
-                        dismiss()
-                    }
-                    .font(AppTypography.body)
-                    .foregroundStyle(AppColors.textSecondary)
-                    .padding(.top, AppSpacing.large)
+                    controlButtons
+                        .padding(.horizontal, AppSpacing.screenHorizontal)
                 }
-                .padding(.bottom, 60)
+
+                Button("破棄") {
+                    viewModel.discardCapture()
+                    dismiss()
+                }
+                .font(AppTypography.body)
+                .foregroundStyle(AppColors.textSecondary)
+                .padding(.top, AppSpacing.medium)
+                .padding(.bottom, AppSpacing.medium)
             }
+            .frame(maxHeight: .infinity)
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .studioScreen()
@@ -75,24 +75,20 @@ struct MicSourceRecordView: View {
     }
 
     private var heroSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 6) {
             Text("RECORD SOURCE")
                 .font(AppTypography.eyebrow)
                 .tracking(2)
                 .foregroundStyle(AppColors.recording)
 
             Text("練習音源を録音")
-                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .font(.system(size: 26, weight: .bold, design: .rounded))
                 .foregroundStyle(AppColors.textPrimary)
-
-            Text("ここでは Song 作成用の練習音源だけを録音します。")
-                .font(AppTypography.caption)
-                .foregroundStyle(AppColors.textSecondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, AppSpacing.screenHorizontal)
-        .padding(.top, AppSpacing.medium)
-        .padding(.bottom, AppSpacing.large)
+        .padding(.top, AppSpacing.small)
+        .padding(.bottom, AppSpacing.medium)
         .background(
             RadialGradient(
                 colors: [
@@ -134,10 +130,6 @@ struct MicSourceRecordView: View {
 
             ProgressView(value: viewModel.inputLevel)
                 .tint(AppColors.recording)
-
-            Text("録音中は入力レベルを見ながら、Song 作成用の練習音源として聞きやすい位置で録ってください。")
-                .font(AppTypography.caption)
-                .foregroundStyle(AppColors.textMuted)
         }
         .padding(.horizontal, AppSpacing.screenHorizontal)
     }
@@ -151,9 +143,6 @@ struct MicSourceRecordView: View {
                     .font(.system(.headline, design: .rounded).weight(.semibold))
                     .foregroundStyle(AppColors.textPrimary)
             }
-            Text("練習音源を録音するには、設定アプリから PhraseRise のマイク利用を有効にしてください。")
-                .font(AppTypography.body)
-                .foregroundStyle(AppColors.textSecondary)
             Button {
                 viewModel.openSettings()
             } label: {

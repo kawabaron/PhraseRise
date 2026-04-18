@@ -11,25 +11,27 @@ struct PhraseEditorView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                heroSection
+        VStack(spacing: 0) {
+            heroSection
 
-                waveformBlock
-                    .padding(.top, AppSpacing.xLarge)
+            waveformBlock
+                .padding(.top, AppSpacing.medium)
 
-                rangeBlock
-                    .padding(.top, AppSpacing.xLarge)
+            Spacer(minLength: AppSpacing.medium)
 
-                detailsBlock
-                    .padding(.top, AppSpacing.xLarge)
+            rangeBlock
 
-                saveButton
-                    .padding(.horizontal, AppSpacing.screenHorizontal)
-                    .padding(.top, AppSpacing.xLarge)
-            }
-            .padding(.bottom, 120)
+            Spacer(minLength: AppSpacing.medium)
+
+            detailsBlock
+
+            Spacer(minLength: AppSpacing.medium)
+
+            saveButton
+                .padding(.horizontal, AppSpacing.screenHorizontal)
+                .padding(.bottom, AppSpacing.medium)
         }
+        .frame(maxHeight: .infinity)
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .studioScreen()
@@ -65,24 +67,20 @@ struct PhraseEditorView: View {
     // MARK: - Hero
 
     private var heroSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 6) {
             Text("PHRASE EDITOR")
                 .font(AppTypography.eyebrow)
                 .tracking(2)
                 .foregroundStyle(AppColors.textMuted)
 
             Text("練習区間を作成")
-                .font(.system(size: 32, weight: .bold, design: .rounded))
+                .font(.system(size: 26, weight: .bold, design: .rounded))
                 .foregroundStyle(AppColors.textPrimary)
-
-            Text("A/B 範囲を決めて、難所を練習区間として保存します。")
-                .font(AppTypography.caption)
-                .foregroundStyle(AppColors.textSecondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, AppSpacing.screenHorizontal)
-        .padding(.top, AppSpacing.medium)
-        .padding(.bottom, AppSpacing.large)
+        .padding(.top, AppSpacing.small)
+        .padding(.bottom, AppSpacing.medium)
         .background(
             RadialGradient(
                 colors: [
@@ -91,7 +89,7 @@ struct PhraseEditorView: View {
                 ],
                 center: UnitPoint(x: 0.1, y: 0.0),
                 startRadius: 10,
-                endRadius: 380
+                endRadius: 320
             )
             .ignoresSafeArea(edges: .top)
         )
@@ -100,105 +98,78 @@ struct PhraseEditorView: View {
     // MARK: - Sections
 
     private var waveformBlock: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.small) {
-            sectionEyebrow("WAVEFORM")
-
-            WaveformPlaceholderView(
-                values: viewModel.waveformValues,
-                selection: viewModel.startRatio ... viewModel.endRatio
-            )
-            .frame(height: 200)
-            .padding(.horizontal, AppSpacing.screenHorizontal)
-        }
+        WaveformPlaceholderView(
+            values: viewModel.waveformValues,
+            selection: viewModel.startRatio ... viewModel.endRatio
+        )
+        .frame(height: 120)
+        .padding(.horizontal, AppSpacing.screenHorizontal)
     }
 
     private var rangeBlock: some View {
         VStack(alignment: .leading, spacing: AppSpacing.medium) {
-            sectionEyebrow("RANGE")
+            rangeEditor(
+                title: "A",
+                valueLabel: Formatting.duration(viewModel.startTimeSec),
+                value: $viewModel.startRatio,
+                range: 0 ... max(viewModel.endRatio - 0.02, 0.01),
+                onMinus: { viewModel.nudgeStart(by: -0.1) },
+                onPlus: { viewModel.nudgeStart(by: 0.1) }
+            )
 
-            VStack(alignment: .leading, spacing: AppSpacing.large) {
-                rangeEditor(
-                    title: "開始位置 (A)",
-                    valueLabel: Formatting.duration(viewModel.startTimeSec),
-                    value: $viewModel.startRatio,
-                    range: 0 ... max(viewModel.endRatio - 0.02, 0.01),
-                    onMinus: { viewModel.nudgeStart(by: -0.1) },
-                    onPlus: { viewModel.nudgeStart(by: 0.1) }
-                )
-
-                rangeEditor(
-                    title: "終了位置 (B)",
-                    valueLabel: Formatting.duration(viewModel.endTimeSec),
-                    value: $viewModel.endRatio,
-                    range: min(viewModel.startRatio + 0.02, 0.99) ... 1,
-                    onMinus: { viewModel.nudgeEnd(by: -0.1) },
-                    onPlus: { viewModel.nudgeEnd(by: 0.1) }
-                )
-
-                HStack(spacing: 10) {
-                    rangePill(label: "A", value: Formatting.duration(viewModel.startTimeSec))
-                    rangePill(label: "B", value: Formatting.duration(viewModel.endTimeSec))
-                    rangePill(label: "長さ", value: Formatting.duration(viewModel.selectedDurationSec))
-                    Spacer(minLength: 0)
-                }
-            }
-            .padding(.horizontal, AppSpacing.screenHorizontal)
+            rangeEditor(
+                title: "B",
+                valueLabel: Formatting.duration(viewModel.endTimeSec),
+                value: $viewModel.endRatio,
+                range: min(viewModel.startRatio + 0.02, 0.99) ... 1,
+                onMinus: { viewModel.nudgeEnd(by: -0.1) },
+                onPlus: { viewModel.nudgeEnd(by: 0.1) }
+            )
         }
+        .padding(.horizontal, AppSpacing.screenHorizontal)
     }
 
     private var detailsBlock: some View {
         VStack(alignment: .leading, spacing: AppSpacing.medium) {
-            sectionEyebrow("DETAILS")
+            TextField("練習区間名", text: $viewModel.name)
+                .textFieldStyle(.plain)
+                .font(AppTypography.body)
+                .foregroundStyle(AppColors.textPrimary)
+                .padding(12)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(AppColors.surface.opacity(0.7))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(AppColors.border, lineWidth: 1)
+                )
 
-            VStack(alignment: .leading, spacing: AppSpacing.large) {
-                fieldGroup(title: "練習区間名") {
-                    TextField("名称", text: $viewModel.name, axis: .vertical)
-                        .textFieldStyle(.plain)
-                        .font(AppTypography.body)
-                        .foregroundStyle(AppColors.textPrimary)
-                        .padding(14)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .fill(AppColors.surface.opacity(0.7))
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .stroke(AppColors.border, lineWidth: 1)
-                        )
-                }
+            TextField("メモ", text: $viewModel.memo)
+                .textFieldStyle(.plain)
+                .font(AppTypography.body)
+                .foregroundStyle(AppColors.textPrimary)
+                .padding(12)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(AppColors.surface.opacity(0.7))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(AppColors.border, lineWidth: 1)
+                )
 
-                fieldGroup(title: "メモ") {
-                    TextField("メモを書く", text: $viewModel.memo, axis: .vertical)
-                        .textFieldStyle(.plain)
-                        .font(AppTypography.body)
-                        .foregroundStyle(AppColors.textPrimary)
-                        .lineLimit(3 ... 6)
-                        .padding(14)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .fill(AppColors.surface.opacity(0.7))
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .stroke(AppColors.border, lineWidth: 1)
-                        )
-                }
-
-                fieldGroup(title: "目標 BPM") {
-                    HStack {
-                        Text("\(viewModel.targetBpm) BPM")
-                            .font(.system(.title3, design: .rounded).weight(.semibold))
-                            .foregroundStyle(AppColors.textPrimary)
-                        Spacer()
-                        Stepper("", value: $viewModel.targetBpm, in: 40 ... 240, step: 1)
-                            .labelsHidden()
-                            .tint(AppColors.accent)
-                    }
-                    .padding(.vertical, 4)
-                }
+            HStack {
+                Text("目標 \(viewModel.targetBpm) BPM")
+                    .font(.system(.body, design: .rounded).weight(.semibold))
+                    .foregroundStyle(AppColors.textPrimary)
+                Spacer()
+                Stepper("", value: $viewModel.targetBpm, in: 40 ... 240, step: 1)
+                    .labelsHidden()
+                    .tint(AppColors.accent)
             }
-            .padding(.horizontal, AppSpacing.screenHorizontal)
         }
+        .padding(.horizontal, AppSpacing.screenHorizontal)
     }
 
     private var saveButton: some View {
@@ -222,14 +193,6 @@ struct PhraseEditorView: View {
 
     // MARK: - Helpers
 
-    private func sectionEyebrow(_ text: String) -> some View {
-        Text(text)
-            .font(AppTypography.eyebrow)
-            .tracking(2)
-            .foregroundStyle(AppColors.textMuted)
-            .padding(.horizontal, AppSpacing.screenHorizontal)
-    }
-
     private func rangeEditor(
         title: String,
         valueLabel: String,
@@ -238,72 +201,40 @@ struct PhraseEditorView: View {
         onMinus: @escaping () -> Void,
         onPlus: @escaping () -> Void
     ) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text(title)
-                    .font(AppTypography.caption)
-                    .foregroundStyle(AppColors.textSecondary)
-                Spacer()
-                Text(valueLabel)
-                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                    .foregroundStyle(AppColors.textPrimary)
-            }
+        HStack(spacing: 10) {
+            Text(title)
+                .font(.system(.headline, design: .rounded).weight(.bold))
+                .foregroundStyle(AppColors.accent)
+                .frame(width: 16, alignment: .leading)
+
+            Text(valueLabel)
+                .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                .foregroundStyle(AppColors.textPrimary)
+                .monospacedDigit()
+                .frame(width: 56, alignment: .leading)
 
             Slider(value: value, in: range)
                 .tint(AppColors.accent)
 
-            HStack(spacing: 6) {
-                nudgeButton(label: "-0.1s", action: onMinus)
-                nudgeButton(label: "+0.1s", action: onPlus)
-                Spacer(minLength: 0)
+            Button(action: onMinus) {
+                Image(systemName: "minus")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(AppColors.textPrimary)
+                    .frame(width: 28, height: 28)
+                    .background(Circle().fill(AppColors.surface))
+                    .overlay(Circle().stroke(AppColors.border, lineWidth: 1))
             }
-        }
-    }
+            .buttonStyle(.plain)
 
-    private func nudgeButton(label: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(label)
-                .font(AppTypography.caption)
-                .foregroundStyle(AppColors.textPrimary)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(Capsule().fill(AppColors.surface))
-                .overlay(Capsule().stroke(AppColors.border, lineWidth: 1))
-        }
-        .buttonStyle(.plain)
-    }
-
-    private func rangePill(label: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(label)
-                .font(AppTypography.eyebrow)
-                .tracking(1)
-                .foregroundStyle(AppColors.textMuted)
-            Text(value)
-                .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                .foregroundStyle(AppColors.textPrimary)
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(AppColors.surface.opacity(0.7))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(AppColors.border, lineWidth: 1)
-        )
-    }
-
-    private func fieldGroup<Content: View>(
-        title: String,
-        @ViewBuilder content: () -> Content
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(AppTypography.caption)
-                .foregroundStyle(AppColors.textSecondary)
-            content()
+            Button(action: onPlus) {
+                Image(systemName: "plus")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(AppColors.textPrimary)
+                    .frame(width: 28, height: 28)
+                    .background(Circle().fill(AppColors.surface))
+                    .overlay(Circle().stroke(AppColors.border, lineWidth: 1))
+            }
+            .buttonStyle(.plain)
         }
     }
 }
