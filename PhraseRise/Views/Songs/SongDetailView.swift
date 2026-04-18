@@ -13,34 +13,38 @@ struct SongDetailView: View {
         _viewModel = State(initialValue: SongDetailViewModel(song: song, dependencies: dependencies))
     }
 
+    private var accentColor: Color {
+        viewModel.song.sourceType == .micRecorded ? AppColors.recording : AppColors.accent
+    }
+
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: AppSpacing.large) {
-                headerCard
+            VStack(spacing: 0) {
+                heroSection
 
-                NavigationLink {
-                    PhraseEditorView(song: viewModel.song, dependencies: dependencies)
-                } label: {
-                    Label("新しい練習区間を追加", systemImage: "plus.circle")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(FilledStudioButtonStyle(tint: AppColors.accent))
+                addPhraseButton
+                    .padding(.horizontal, AppSpacing.screenHorizontal)
+                    .padding(.top, AppSpacing.large)
 
                 phraseSection
+                    .padding(.top, AppSpacing.xLarge)
             }
-            .padding(.horizontal, AppSpacing.screenHorizontal)
-            .padding(.top, AppSpacing.large)
             .padding(.bottom, 120)
         }
-        .navigationTitle("Song Detail")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .studioScreen()
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button(role: .destructive) {
-                    showingSongDeleteAlert = true
+                Menu {
+                    Button(role: .destructive) {
+                        showingSongDeleteAlert = true
+                    } label: {
+                        Label("Song を削除", systemImage: "trash")
+                    }
                 } label: {
-                    Image(systemName: "trash")
+                    Image(systemName: "ellipsis.circle")
+                        .foregroundStyle(AppColors.textSecondary)
                 }
             }
         }
@@ -83,94 +87,200 @@ struct SongDetailView: View {
         }
     }
 
-    private var headerCard: some View {
-        StudioCard(emphasisColor: viewModel.song.sourceType == .micRecorded ? AppColors.recording : AppColors.accent) {
-            VStack(alignment: .leading, spacing: 14) {
+    private var heroSection: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.medium) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(viewModel.song.sourceType.label.uppercased())
+                    .font(AppTypography.eyebrow)
+                    .tracking(2)
+                    .foregroundStyle(accentColor)
+
                 Text(viewModel.song.title)
-                    .font(AppTypography.screenTitle)
-                Text(viewModel.song.artistName ?? viewModel.song.sourceType.label)
-                    .font(AppTypography.body)
-                    .foregroundStyle(AppColors.textSecondary)
+                    .font(.system(size: 32, weight: .bold, design: .rounded))
+                    .foregroundStyle(AppColors.textPrimary)
+                    .lineLimit(2)
 
-                WaveformPlaceholderView(
-                    values: viewModel.waveformValues,
-                    selection: 0.22 ... 0.40,
-                    showHead: false
-                )
-                .frame(height: 180)
-
-                HStack {
-                    Label("\(viewModel.phrases.count) 練習区間", systemImage: "rectangle.split.3x1")
-                    Spacer()
-                    Label(Formatting.duration(viewModel.song.durationSec), systemImage: "clock")
+                if let artist = viewModel.song.artistName, !artist.isEmpty {
+                    Text(artist)
+                        .font(AppTypography.body)
+                        .foregroundStyle(AppColors.textSecondary)
                 }
-                .font(AppTypography.caption)
-                .foregroundStyle(AppColors.textSecondary)
             }
+
+            WaveformPlaceholderView(
+                values: viewModel.waveformValues,
+                selection: 0.22 ... 0.40,
+                showHead: false
+            )
+            .frame(height: 120)
+            .padding(.top, AppSpacing.small)
+
+            HStack(spacing: 16) {
+                metaLabel(
+                    icon: "rectangle.split.3x1",
+                    text: "\(viewModel.phrases.count) 練習区間"
+                )
+                metaLabel(
+                    icon: "clock",
+                    text: Formatting.duration(viewModel.song.durationSec)
+                )
+                Spacer()
+            }
+            .font(AppTypography.caption)
+            .foregroundStyle(AppColors.textMuted)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, AppSpacing.screenHorizontal)
+        .padding(.top, AppSpacing.medium)
+        .padding(.bottom, AppSpacing.large)
+        .background(
+            RadialGradient(
+                colors: [
+                    accentColor.opacity(0.22),
+                    Color.clear
+                ],
+                center: UnitPoint(x: 0.1, y: 0.0),
+                startRadius: 10,
+                endRadius: 380
+            )
+            .ignoresSafeArea(edges: .top)
+        )
+    }
+
+    private func metaLabel(icon: String, text: String) -> some View {
+        HStack(spacing: 5) {
+            Image(systemName: icon)
+            Text(text)
         }
     }
 
+    private var addPhraseButton: some View {
+        NavigationLink {
+            PhraseEditorView(song: viewModel.song, dependencies: dependencies)
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "plus")
+                    .font(.system(size: 14, weight: .semibold))
+                Text("新しい練習区間を追加")
+                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
+            }
+            .foregroundStyle(AppColors.accent)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(AppColors.accent.opacity(0.12))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .stroke(AppColors.accent.opacity(0.32), style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
     private var phraseSection: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.medium) {
-            StudioSectionHeader("練習区間")
+        VStack(alignment: .leading, spacing: 0) {
+            Text("練習区間")
+                .font(AppTypography.eyebrow)
+                .tracking(2)
+                .foregroundStyle(AppColors.textMuted)
+                .padding(.horizontal, AppSpacing.screenHorizontal)
+                .padding(.bottom, AppSpacing.small)
 
             if viewModel.phrases.isEmpty {
-                StudioCard {
-                    Text("まだ練習区間がありません。難所を切り出して練習を始めましょう。")
-                        .foregroundStyle(AppColors.textSecondary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
+                Text("まだ練習区間がありません。難所を切り出して練習を始めましょう。")
+                    .font(AppTypography.caption)
+                    .foregroundStyle(AppColors.textMuted)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, AppSpacing.screenHorizontal)
+                    .padding(.vertical, AppSpacing.large)
             } else {
-                ForEach(viewModel.phrases, id: \.id) { phrase in
-                    StudioCard(emphasisColor: phrase.status.tint) {
-                        VStack(alignment: .leading, spacing: 10) {
-                            HStack {
-                                Text(phrase.name)
-                                    .font(AppTypography.cardTitle)
-                                Spacer()
-                                Text(phrase.status.label)
-                                    .font(AppTypography.caption)
-                                    .padding(.horizontal, 10)
-                                    .padding(.vertical, 6)
-                                    .background(phrase.status.tint.opacity(0.18), in: Capsule())
-                            }
-
-                            Text("\(Formatting.duration(phrase.startTimeSec)) - \(Formatting.duration(phrase.endTimeSec))")
-                                .font(AppTypography.caption)
-                                .foregroundStyle(AppColors.textSecondary)
-
-                            HStack {
-                                Button {
-                                    viewModel.togglePhrasePlayback(phrase)
-                                } label: {
-                                    Image(systemName: viewModel.playingPhraseID == phrase.id ? "stop.fill" : "play.fill")
-                                }
-                                .buttonStyle(FilledStudioButtonStyle(tint: AppColors.accentSoft))
-
-                                NavigationLink("詳細") {
-                                    PhraseDetailView(phrase: phrase, song: viewModel.song, dependencies: dependencies)
-                                }
-                                .buttonStyle(FilledStudioButtonStyle(tint: AppColors.surfaceGlass))
-
-                                NavigationLink("編集") {
-                                    PhraseEditorView(song: viewModel.song, phrase: phrase, dependencies: dependencies)
-                                }
-                                .buttonStyle(FilledStudioButtonStyle(tint: AppColors.accentSoft))
-
-                                NavigationLink("練習") {
-                                    PracticePlayerView(phrase: phrase, song: viewModel.song, dependencies: dependencies)
-                                }
-                                .buttonStyle(FilledStudioButtonStyle(tint: AppColors.accent))
-
-                                Button("削除", role: .destructive) {
-                                    phraseToDelete = phrase
-                                }
-                                .buttonStyle(FilledStudioButtonStyle(tint: AppColors.recording))
-                            }
+                ForEach(Array(viewModel.phrases.enumerated()), id: \.element.id) { index, phrase in
+                    NavigationLink {
+                        PhraseDetailView(phrase: phrase, song: viewModel.song, dependencies: dependencies)
+                    } label: {
+                        phraseRow(phrase)
+                    }
+                    .buttonStyle(.plain)
+                    .contextMenu {
+                        NavigationLink {
+                            PracticePlayerView(phrase: phrase, song: viewModel.song, dependencies: dependencies)
+                        } label: {
+                            Label("練習", systemImage: "play.circle")
                         }
+                        NavigationLink {
+                            PhraseEditorView(song: viewModel.song, phrase: phrase, dependencies: dependencies)
+                        } label: {
+                            Label("編集", systemImage: "pencil")
+                        }
+                        Button(role: .destructive) {
+                            phraseToDelete = phrase
+                        } label: {
+                            Label("削除", systemImage: "trash")
+                        }
+                    }
+
+                    if index < viewModel.phrases.count - 1 {
+                        Rectangle()
+                            .fill(AppColors.border)
+                            .frame(height: 0.5)
+                            .padding(.leading, AppSpacing.screenHorizontal + 22)
                     }
                 }
             }
         }
+    }
+
+    private func phraseRow(_ phrase: Phrase) -> some View {
+        HStack(spacing: 14) {
+            Circle()
+                .fill(phrase.status.tint)
+                .frame(width: 8, height: 8)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(phrase.name)
+                    .font(.system(.body, design: .rounded).weight(.semibold))
+                    .foregroundStyle(AppColors.textPrimary)
+                    .lineLimit(1)
+
+                HStack(spacing: 6) {
+                    Text("\(Formatting.duration(phrase.startTimeSec)) – \(Formatting.duration(phrase.endTimeSec))")
+                    Text("·")
+                    Text(phrase.status.label)
+                        .foregroundStyle(phrase.status.tint)
+                }
+                .font(AppTypography.caption)
+                .foregroundStyle(AppColors.textMuted)
+                .lineLimit(1)
+            }
+
+            Spacer(minLength: 8)
+
+            Button {
+                viewModel.togglePhrasePlayback(phrase)
+            } label: {
+                Image(systemName: viewModel.playingPhraseID == phrase.id ? "stop.fill" : "play.fill")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(AppColors.textPrimary)
+                    .frame(width: 34, height: 34)
+                    .background(
+                        Circle().fill(
+                            viewModel.playingPhraseID == phrase.id
+                                ? AppColors.recording
+                                : AppColors.surface
+                        )
+                    )
+                    .overlay(Circle().stroke(AppColors.border, lineWidth: 1))
+            }
+            .buttonStyle(.plain)
+
+            Image(systemName: "chevron.right")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(AppColors.textMuted)
+        }
+        .padding(.horizontal, AppSpacing.screenHorizontal)
+        .padding(.vertical, 12)
+        .contentShape(Rectangle())
     }
 }
