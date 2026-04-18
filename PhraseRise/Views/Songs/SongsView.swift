@@ -133,7 +133,7 @@ struct SongsView: View {
                 Text("\(viewModel.songs.count)")
                     .font(.system(size: 72, weight: .bold, design: .rounded))
                     .foregroundStyle(AppColors.textPrimary)
-                Text("songs")
+                Text("件")
                     .font(.system(.title3, design: .rounded).weight(.regular))
                     .foregroundStyle(AppColors.textMuted)
             }

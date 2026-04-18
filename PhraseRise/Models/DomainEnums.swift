@@ -27,11 +27,11 @@ enum PhraseStatus: String, Codable, CaseIterable, Identifiable {
     var label: String {
         switch self {
         case .active:
-            return "active"
+            return "練習中"
         case .mastered:
-            return "mastered"
+            return "達成"
         case .archived:
-            return "archived"
+            return "アーカイブ"
         }
     }
 

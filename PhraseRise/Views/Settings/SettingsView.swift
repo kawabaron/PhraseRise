@@ -167,9 +167,9 @@ struct SettingsView: View {
                     get: { viewModel.settings.recordingQualityPreset },
                     set: { viewModel.updateRecordingQuality($0) }
                 )) {
-                    Text("standard").tag("standard")
-                    Text("high").tag("high")
-                    Text("lossless").tag("lossless")
+                    Text("標準").tag("standard")
+                    Text("高音質").tag("high")
+                    Text("ロスレス").tag("lossless")
                 }
                 .pickerStyle(.menu)
                 .tint(AppColors.accent)

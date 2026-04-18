@@ -181,11 +181,11 @@ struct PhraseDetailView: View {
         VStack(alignment: .leading, spacing: 0) {
             sectionEyebrow("成績")
 
-            metricRow("前回 stable", value: bpmText(viewModel.phrase.lastStableBpm), valueTint: AppColors.accent)
+            metricRow("前回安定 BPM", value: bpmText(viewModel.phrase.lastStableBpm), valueTint: AppColors.accent)
             hairline
-            metricRow("最高 stable", value: bpmText(viewModel.phrase.bestStableBpm), valueTint: AppColors.success)
+            metricRow("最高安定 BPM", value: bpmText(viewModel.phrase.bestStableBpm), valueTint: AppColors.success)
             hairline
-            metricRow("stable率", value: "\(viewModel.stableRate)%", valueTint: AppColors.warning)
+            metricRow("安定率", value: "\(viewModel.stableRate)%", valueTint: AppColors.warning)
             hairline
             metricRow("練習時間", value: "\(viewModel.totalPracticeMinutes)分", valueTint: AppColors.textPrimary)
         }
