@@ -17,7 +17,7 @@ struct PaywallView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("PhraseRise Premium")
                             .font(AppTypography.screenTitle)
-                        Text("録音を貯めて比較しながら、難所フレーズを無制限に管理できます。")
+                        Text("録音を貯めて比較しながら、難所の練習区間を無制限に管理できます。")
                             .font(AppTypography.body)
                             .foregroundStyle(AppColors.textSecondary)
                     }
@@ -34,7 +34,7 @@ struct PaywallView: View {
 
                 StudioCard {
                     VStack(alignment: .leading, spacing: 12) {
-                        feature("Phrase を無制限に保存")
+                        feature("練習区間を無制限に保存")
                         feature("演奏録音を無制限に保存")
                         feature("2件の比較再生")
                         feature("全期間グラフ")

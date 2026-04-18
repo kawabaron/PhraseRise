@@ -1,7 +1,6 @@
 import SwiftUI
 
 private enum AppTab: String, CaseIterable, Identifiable {
-    case home
     case songs
     case stats
     case settings
@@ -10,8 +9,6 @@ private enum AppTab: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .home:
-            return "Home"
         case .songs:
             return "Songs"
         case .stats:
@@ -23,8 +20,6 @@ private enum AppTab: String, CaseIterable, Identifiable {
 
     var symbol: String {
         switch self {
-        case .home:
-            return "house"
         case .songs:
             return "music.note.list"
         case .stats:
@@ -37,18 +32,10 @@ private enum AppTab: String, CaseIterable, Identifiable {
 
 struct RootTabView: View {
     let dependencies: AppDependencies
-    @State private var selectedTab: AppTab = .home
+    @State private var selectedTab: AppTab = .songs
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            NavigationStack {
-                HomeView(dependencies: dependencies)
-            }
-            .tabItem {
-                Label(AppTab.home.title, systemImage: AppTab.home.symbol)
-            }
-            .tag(AppTab.home)
-
             NavigationStack {
                 SongsView(dependencies: dependencies)
             }

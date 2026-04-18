@@ -23,7 +23,7 @@ final class PhraseEditorViewModel {
         phraseRepository = dependencies.phraseRepository
         subscriptionService = dependencies.subscriptionService
 
-        name = phrase?.name ?? "新しい Phrase"
+        name = phrase?.name ?? "新しい練習区間"
         memo = phrase?.memo ?? ""
         targetBpm = phrase?.targetBpm ?? 96
 
@@ -67,7 +67,7 @@ final class PhraseEditorViewModel {
     func savePhrase() -> Phrase? {
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedName.isEmpty else {
-            errorMessage = "フレーズ名を入力してください。"
+            errorMessage = "練習区間名を入力してください。"
             return nil
         }
 

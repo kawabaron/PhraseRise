@@ -118,13 +118,13 @@ struct StatsView: View {
                 .pickerStyle(.menu)
 
                 Picker(
-                    "Phrase",
+                    "練習区間",
                     selection: Binding(
                         get: { viewModel.selectedPhraseID },
                         set: { viewModel.selectPhrase($0) }
                     )
                 ) {
-                    Text("すべての Phrase").tag(Optional<UUID>.none)
+                    Text("すべての練習区間").tag(Optional<UUID>.none)
                     ForEach(viewModel.availablePhrases, id: \.id) { phrase in
                         Text(phrase.name).tag(phrase.id as UUID?)
                     }

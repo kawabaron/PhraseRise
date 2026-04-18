@@ -13,7 +13,7 @@ struct PhraseEditorView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: AppSpacing.large) {
-                StudioSectionHeader("Phrase を作成", subtitle: "A/B 範囲を決めて、難所フレーズとして保存します。")
+                StudioSectionHeader("練習区間を作成", subtitle: "A/B 範囲を決めて、難所を練習区間として保存します。")
 
                 StudioCard(emphasisColor: AppColors.accent) {
                     VStack(alignment: .leading, spacing: 12) {
@@ -50,7 +50,7 @@ struct PhraseEditorView: View {
 
                 StudioCard {
                     VStack(alignment: .leading, spacing: 14) {
-                        textField(title: "フレーズ名", text: $viewModel.name)
+                        textField(title: "練習区間名", text: $viewModel.name)
                         textField(title: "メモ", text: $viewModel.memo)
 
                         VStack(alignment: .leading, spacing: 8) {
@@ -70,7 +70,7 @@ struct PhraseEditorView: View {
                     }
                 }
 
-                Button("Phrase を保存") {
+                Button("練習区間を保存") {
                     if viewModel.savePhrase() != nil {
                         dismiss()
                     }
@@ -81,7 +81,7 @@ struct PhraseEditorView: View {
             .padding(.top, AppSpacing.large)
             .padding(.bottom, 120)
         }
-        .navigationTitle("Phrase Editor")
+        .navigationTitle("練習区間エディタ")
         .navigationBarTitleDisplayMode(.inline)
         .studioScreen()
         .sheet(

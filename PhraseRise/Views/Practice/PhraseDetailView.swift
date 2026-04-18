@@ -25,7 +25,7 @@ struct PhraseDetailView: View {
             .padding(.top, AppSpacing.large)
             .padding(.bottom, 120)
         }
-        .navigationTitle("Phrase Detail")
+        .navigationTitle("練習区間の詳細")
         .navigationBarTitleDisplayMode(.inline)
         .studioScreen()
         .task {

@@ -23,7 +23,7 @@ final class SubscriptionService {
         guard !state.isPremium, currentCount >= freePhraseLimit else {
             return .allowed
         }
-        return .blocked(reason: "無料版では Phrase の保存数に上限があります。Premium で無制限に管理できます。")
+        return .blocked(reason: "無料版では練習区間の保存数に上限があります。Premium で無制限に管理できます。")
     }
 
     func gateRecordingSave(currentCount: Int) -> SubscriptionGate {

@@ -21,7 +21,7 @@ struct SongDetailView: View {
                 NavigationLink {
                     PhraseEditorView(song: viewModel.song, dependencies: dependencies)
                 } label: {
-                    Label("新しい Phrase を追加", systemImage: "plus.circle")
+                    Label("新しい練習区間を追加", systemImage: "plus.circle")
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(FilledStudioButtonStyle(tint: AppColors.accent))
@@ -51,10 +51,10 @@ struct SongDetailView: View {
             }
             Button("キャンセル", role: .cancel) { }
         } message: {
-            Text("関連する Phrase、練習記録、演奏録音も一緒に削除されます。")
+            Text("関連する練習区間、練習記録、演奏録音も一緒に削除されます。")
         }
         .confirmationDialog(
-            "この Phrase を削除しますか？",
+            "この練習区間を削除しますか？",
             isPresented: Binding(
                 get: { phraseToDelete != nil },
                 set: { isPresented in
@@ -78,6 +78,9 @@ struct SongDetailView: View {
         .onAppear {
             viewModel.refresh()
         }
+        .onDisappear {
+            viewModel.stopPlayback()
+        }
     }
 
     private var headerCard: some View {
@@ -97,7 +100,7 @@ struct SongDetailView: View {
                 .frame(height: 180)
 
                 HStack {
-                    Label("\(viewModel.phrases.count) Phrase", systemImage: "rectangle.split.3x1")
+                    Label("\(viewModel.phrases.count) 練習区間", systemImage: "rectangle.split.3x1")
                     Spacer()
                     Label(Formatting.duration(viewModel.song.durationSec), systemImage: "clock")
                 }
@@ -109,11 +112,11 @@ struct SongDetailView: View {
 
     private var phraseSection: some View {
         VStack(alignment: .leading, spacing: AppSpacing.medium) {
-            StudioSectionHeader("フレーズ")
+            StudioSectionHeader("練習区間")
 
             if viewModel.phrases.isEmpty {
                 StudioCard {
-                    Text("まだ Phrase がありません。難所フレーズを切り出して練習を始めましょう。")
+                    Text("まだ練習区間がありません。難所を切り出して練習を始めましょう。")
                         .foregroundStyle(AppColors.textSecondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
@@ -137,6 +140,13 @@ struct SongDetailView: View {
                                 .foregroundStyle(AppColors.textSecondary)
 
                             HStack {
+                                Button {
+                                    viewModel.togglePhrasePlayback(phrase)
+                                } label: {
+                                    Image(systemName: viewModel.playingPhraseID == phrase.id ? "stop.fill" : "play.fill")
+                                }
+                                .buttonStyle(FilledStudioButtonStyle(tint: AppColors.accentSoft))
+
                                 NavigationLink("詳細") {
                                     PhraseDetailView(phrase: phrase, song: viewModel.song, dependencies: dependencies)
                                 }
