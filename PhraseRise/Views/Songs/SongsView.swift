@@ -33,57 +33,19 @@ struct SongsView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: AppSpacing.large) {
-                StudioSectionHeader("練習音源", subtitle: "Files またはマイク録音から追加できます。")
+            VStack(spacing: 0) {
+                heroSection
 
                 if viewModel.songs.isEmpty {
-                    emptyCard
+                    emptyState
                 } else {
-                    ForEach(viewModel.songs, id: \.id) { song in
-                        NavigationLink {
-                            SongDetailView(song: song, dependencies: dependencies)
-                        } label: {
-                            StudioCard(emphasisColor: song.sourceType == .micRecorded ? AppColors.recording : AppColors.accent) {
-                                VStack(alignment: .leading, spacing: 12) {
-                                    HStack {
-                                        VStack(alignment: .leading, spacing: 4) {
-                                            Text(song.title)
-                                                .font(AppTypography.cardTitle)
-                                            Text(song.artistName ?? song.sourceType.label)
-                                                .font(AppTypography.caption)
-                                                .foregroundStyle(AppColors.textSecondary)
-                                        }
-
-                                        Spacer()
-
-                                        Label(
-                                            song.sourceType == .micRecorded ? "mic" : "file",
-                                            systemImage: song.sourceType == .micRecorded ? "mic.fill" : "folder"
-                                        )
-                                        .font(AppTypography.caption)
-                                        .foregroundStyle(song.sourceType == .micRecorded ? AppColors.recording : AppColors.accent)
-                                    }
-
-                                    HStack {
-                                        Label(Formatting.duration(song.durationSec), systemImage: "clock")
-                                        Spacer()
-                                        Label(Formatting.date(song.updatedAt), systemImage: "calendar")
-                                    }
-                                    .font(AppTypography.caption)
-                                    .foregroundStyle(AppColors.textSecondary)
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            }
-                        }
-                        .buttonStyle(.plain)
-                    }
+                    songList
                 }
             }
-            .padding(.horizontal, AppSpacing.screenHorizontal)
-            .padding(.top, AppSpacing.large)
             .padding(.bottom, 120)
         }
-        .navigationTitle("Songs")
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
         .studioScreen()
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -160,16 +122,130 @@ struct SongsView: View {
         }
     }
 
-    private var emptyCard: some View {
-        StudioCard {
-            VStack(alignment: .leading, spacing: 10) {
-                Text("まだ練習音源がありません。")
-                    .font(AppTypography.cardTitle)
-                Text("右上の追加ボタンから、Files または練習音源を録音して始められます。")
-                    .font(AppTypography.body)
+    private var heroSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("PRACTICE SOURCES")
+                .font(AppTypography.eyebrow)
+                .tracking(2)
+                .foregroundStyle(AppColors.textMuted)
+
+            HStack(alignment: .lastTextBaseline, spacing: 10) {
+                Text("\(viewModel.songs.count)")
+                    .font(.system(size: 72, weight: .bold, design: .rounded))
+                    .foregroundStyle(AppColors.textPrimary)
+                Text("songs")
+                    .font(.system(.title3, design: .rounded).weight(.regular))
+                    .foregroundStyle(AppColors.textMuted)
+            }
+
+            if !viewModel.songs.isEmpty {
+                Text("合計 \(totalDurationLabel)")
+                    .font(AppTypography.caption)
                     .foregroundStyle(AppColors.textSecondary)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, AppSpacing.screenHorizontal)
+        .padding(.top, AppSpacing.medium)
+        .padding(.bottom, AppSpacing.xLarge)
+        .background(
+            RadialGradient(
+                colors: [
+                    AppColors.accent.opacity(0.22),
+                    Color.clear
+                ],
+                center: UnitPoint(x: 0.1, y: 0.0),
+                startRadius: 10,
+                endRadius: 360
+            )
+            .ignoresSafeArea(edges: .top)
+        )
+    }
+
+    private var songList: some View {
+        LazyVStack(spacing: 0) {
+            ForEach(Array(viewModel.songs.enumerated()), id: \.element.id) { index, song in
+                NavigationLink {
+                    SongDetailView(song: song, dependencies: dependencies)
+                } label: {
+                    songRow(song)
+                }
+                .buttonStyle(.plain)
+
+                if index < viewModel.songs.count - 1 {
+                    Rectangle()
+                        .fill(AppColors.border)
+                        .frame(height: 0.5)
+                        .padding(.leading, AppSpacing.screenHorizontal + 22)
+                }
+            }
+        }
+        .padding(.top, AppSpacing.small)
+    }
+
+    private func songRow(_ song: Song) -> some View {
+        HStack(spacing: 14) {
+            Circle()
+                .fill(song.sourceType == .micRecorded ? AppColors.recording : AppColors.accent)
+                .frame(width: 8, height: 8)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(song.title)
+                    .font(.system(.body, design: .rounded).weight(.semibold))
+                    .foregroundStyle(AppColors.textPrimary)
+                    .lineLimit(1)
+
+                Text(subtitleLine(for: song))
+                    .font(AppTypography.caption)
+                    .foregroundStyle(AppColors.textMuted)
+                    .lineLimit(1)
+            }
+
+            Spacer(minLength: 8)
+
+            Image(systemName: "chevron.right")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(AppColors.textMuted)
+        }
+        .padding(.horizontal, AppSpacing.screenHorizontal)
+        .padding(.vertical, 14)
+        .contentShape(Rectangle())
+    }
+
+    private func subtitleLine(for song: Song) -> String {
+        var parts: [String] = []
+        if let artist = song.artistName, !artist.isEmpty {
+            parts.append(artist)
+        } else {
+            parts.append(song.sourceType.label)
+        }
+        parts.append(Formatting.duration(song.durationSec))
+        parts.append(Formatting.relativeDate(song.updatedAt))
+        return parts.joined(separator: " · ")
+    }
+
+    private var totalDurationLabel: String {
+        let total = Int(viewModel.songs.reduce(0.0) { $0 + $1.durationSec }.rounded())
+        let hours = total / 3600
+        let minutes = (total % 3600) / 60
+        let seconds = total % 60
+        if hours > 0 {
+            return String(format: "%d:%02d:%02d", hours, minutes, seconds)
+        }
+        return String(format: "%d:%02d", minutes, seconds)
+    }
+
+    private var emptyState: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("まだ練習音源がありません。")
+                .font(.system(.body, design: .rounded).weight(.semibold))
+                .foregroundStyle(AppColors.textPrimary)
+            Text("右上の + から Files またはマイク録音で追加できます。")
+                .font(AppTypography.caption)
+                .foregroundStyle(AppColors.textMuted)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, AppSpacing.screenHorizontal)
+        .padding(.top, AppSpacing.large)
     }
 }
