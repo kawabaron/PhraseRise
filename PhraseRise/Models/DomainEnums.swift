@@ -57,11 +57,11 @@ enum PracticeResultType: String, Codable, CaseIterable, Identifiable {
     var label: String {
         switch self {
         case .stable:
-            return "stable"
+            return "安定"
         case .barely:
-            return "barely"
+            return "ギリギリ"
         case .failed:
-            return "failed"
+            return "失敗"
         }
     }
 
