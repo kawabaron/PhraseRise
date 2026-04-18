@@ -12,65 +12,146 @@ struct PaywallView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(alignment: .leading, spacing: AppSpacing.large) {
-                StudioCard(emphasisColor: AppColors.accent) {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("PhraseRise Premium")
-                            .font(AppTypography.screenTitle)
-                        Text("録音を貯めて比較しながら、難所の練習区間を無制限に管理できます。")
-                            .font(AppTypography.body)
-                            .foregroundStyle(AppColors.textSecondary)
-                    }
-                }
+            ScrollView {
+                VStack(spacing: 0) {
+                    heroSection
 
-                if let message {
-                    StudioCard {
+                    if let message {
                         Text(message)
                             .font(AppTypography.body)
                             .foregroundStyle(AppColors.textSecondary)
                             .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, AppSpacing.screenHorizontal)
+                            .padding(.top, AppSpacing.large)
                     }
-                }
 
-                StudioCard {
-                    VStack(alignment: .leading, spacing: 12) {
-                        feature("練習区間を無制限に保存")
-                        feature("演奏録音を無制限に保存")
-                        feature("2件の比較再生")
-                        feature("全期間グラフ")
-                        feature("次回提案のフル機能")
-                    }
-                }
+                    featuresSection
+                        .padding(.top, AppSpacing.xLarge)
 
-                Button(viewModel.subscription.isPremium ? "Premium 利用中" : "Premium を有効化") {
-                    viewModel.upgradeToPremium()
-                    dismiss()
+                    actionStack
+                        .padding(.horizontal, AppSpacing.screenHorizontal)
+                        .padding(.top, AppSpacing.xLarge)
                 }
-                .buttonStyle(FilledStudioButtonStyle(tint: AppColors.accent))
-
-                if viewModel.subscription.isPremium {
-                    Button("無料版に戻す") {
-                        viewModel.restoreFree()
-                    }
-                    .buttonStyle(FilledStudioButtonStyle(tint: AppColors.surfaceGlass))
-                }
-
-                Button("閉じる") {
-                    dismiss()
-                }
-                .buttonStyle(FilledStudioButtonStyle(tint: AppColors.accentSoft))
-
-                Spacer()
+                .padding(.bottom, 60)
             }
-            .padding(AppSpacing.large)
-            .navigationTitle("Premium")
+            .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .studioScreen()
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(AppColors.textMuted)
+                    }
+                }
+            }
         }
     }
 
-    private func feature(_ title: String) -> some View {
-        Label(title, systemImage: "checkmark.circle.fill")
-            .foregroundStyle(AppColors.textPrimary)
+    private var heroSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("PHRASERISE")
+                .font(AppTypography.eyebrow)
+                .tracking(2)
+                .foregroundStyle(AppColors.textMuted)
+
+            Text("Premium")
+                .font(.system(size: 56, weight: .bold, design: .rounded))
+                .foregroundStyle(AppColors.textPrimary)
+
+            Text("録音を貯めて比較しながら、難所の練習区間を無制限に管理できます。")
+                .font(AppTypography.body)
+                .foregroundStyle(AppColors.textSecondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, AppSpacing.screenHorizontal)
+        .padding(.top, AppSpacing.medium)
+        .padding(.bottom, AppSpacing.xLarge)
+        .background(
+            RadialGradient(
+                colors: [
+                    AppColors.accent.opacity(0.22),
+                    Color.clear
+                ],
+                center: UnitPoint(x: 0.1, y: 0.0),
+                startRadius: 10,
+                endRadius: 380
+            )
+            .ignoresSafeArea(edges: .top)
+        )
+    }
+
+    private var featuresSection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("INCLUDED")
+                .font(AppTypography.eyebrow)
+                .tracking(2)
+                .foregroundStyle(AppColors.textMuted)
+                .padding(.horizontal, AppSpacing.screenHorizontal)
+                .padding(.bottom, AppSpacing.small)
+
+            featureRow("練習区間を無制限に保存")
+            hairline
+            featureRow("演奏録音を無制限に保存")
+            hairline
+            featureRow("2件の比較再生")
+            hairline
+            featureRow("全期間グラフ")
+            hairline
+            featureRow("次回提案のフル機能")
+        }
+    }
+
+    private func featureRow(_ title: String) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: "checkmark")
+                .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(AppColors.accent)
+                .frame(width: 20)
+            Text(title)
+                .font(AppTypography.body)
+                .foregroundStyle(AppColors.textPrimary)
+            Spacer()
+        }
+        .padding(.horizontal, AppSpacing.screenHorizontal)
+        .padding(.vertical, 14)
+    }
+
+    private var hairline: some View {
+        Rectangle()
+            .fill(AppColors.border)
+            .frame(height: 0.5)
+            .padding(.leading, AppSpacing.screenHorizontal + 32)
+    }
+
+    private var actionStack: some View {
+        VStack(spacing: AppSpacing.small) {
+            Button {
+                viewModel.upgradeToPremium()
+                dismiss()
+            } label: {
+                Text(viewModel.subscription.isPremium ? "Premium 利用中" : "Premium を有効化")
+                    .font(.system(.headline, design: .rounded).weight(.semibold))
+                    .foregroundStyle(Color.black)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(AppColors.accent)
+                    )
+            }
+            .buttonStyle(.plain)
+
+            if viewModel.subscription.isPremium {
+                Button("無料版に戻す") {
+                    viewModel.restoreFree()
+                }
+                .font(AppTypography.body)
+                .foregroundStyle(AppColors.textSecondary)
+                .padding(.vertical, 12)
+            }
+        }
     }
 }

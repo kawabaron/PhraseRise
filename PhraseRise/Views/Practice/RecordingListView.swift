@@ -6,6 +6,7 @@ struct RecordingListView: View {
     let dependencies: AppDependencies
 
     @State private var viewModel: RecordingListViewModel
+    @State private var recordingToDelete: PerformanceRecording?
 
     init(phrase: Phrase, song: Song, dependencies: AppDependencies) {
         self.phrase = phrase
@@ -16,28 +17,19 @@ struct RecordingListView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: AppSpacing.large) {
-                StudioSectionHeader("演奏録音一覧", subtitle: "日付、BPM、結果を見ながら聞き返せます。")
+            VStack(spacing: 0) {
+                heroSection
 
-                compareCard
+                compareBlock
+                    .padding(.horizontal, AppSpacing.screenHorizontal)
+                    .padding(.top, AppSpacing.large)
 
-                if viewModel.recordings.isEmpty {
-                    StudioCard {
-                        Text("演奏録音はまだありません。PracticePlayer から録音してみましょう。")
-                            .foregroundStyle(AppColors.textSecondary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                } else {
-                    ForEach(viewModel.recordings, id: \.id) { recording in
-                        recordingCard(recording)
-                    }
-                }
+                recordingsSection
+                    .padding(.top, AppSpacing.xLarge)
             }
-            .padding(.horizontal, AppSpacing.screenHorizontal)
-            .padding(.top, AppSpacing.large)
             .padding(.bottom, 120)
         }
-        .navigationTitle("Recordings")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .studioScreen()
         .sheet(
@@ -67,135 +59,265 @@ struct RecordingListView: View {
         } message: {
             Text(viewModel.errorMessage ?? "不明なエラーです。")
         }
+        .confirmationDialog(
+            "この録音を削除しますか？",
+            isPresented: Binding(
+                get: { recordingToDelete != nil },
+                set: { isPresented in
+                    if !isPresented {
+                        recordingToDelete = nil
+                    }
+                }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button("削除", role: .destructive) {
+                if let recordingToDelete {
+                    viewModel.delete(recordingToDelete)
+                    self.recordingToDelete = nil
+                }
+            }
+            Button("キャンセル", role: .cancel) { }
+        }
         .onDisappear {
             viewModel.stopPreview()
         }
     }
 
-    private var compareCard: some View {
-        StudioCard(emphasisColor: AppColors.accent) {
-            VStack(alignment: .leading, spacing: 12) {
-                Text("比較再生")
-                    .font(AppTypography.cardTitle)
+    // MARK: - Hero
 
-                Text(viewModel.compareTitle)
-                    .font(AppTypography.caption)
-                    .foregroundStyle(AppColors.textSecondary)
+    private var heroSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("RECORDINGS")
+                .font(AppTypography.eyebrow)
+                .tracking(2)
+                .foregroundStyle(AppColors.textMuted)
 
-                HStack {
-                    selectedBadge(index: 1, recording: viewModel.selectedRecordings.first)
-                    selectedBadge(index: 2, recording: viewModel.selectedRecordings.dropFirst().first)
-                }
-
-                HStack(spacing: AppSpacing.medium) {
-                    Button {
-                        viewModel.playComparison()
-                    } label: {
-                        Label("比較再生", systemImage: "arrow.left.arrow.right.circle.fill")
-                    }
-                    .buttonStyle(FilledStudioButtonStyle(tint: AppColors.accent))
-
-                    Button {
-                        viewModel.stopPreview()
-                    } label: {
-                        Label("停止", systemImage: "stop.fill")
-                    }
-                    .buttonStyle(FilledStudioButtonStyle(tint: AppColors.surfaceGlass))
-                }
+            HStack(alignment: .lastTextBaseline, spacing: 8) {
+                Text("\(viewModel.recordings.count)")
+                    .font(.system(size: 72, weight: .bold, design: .rounded))
+                    .foregroundStyle(AppColors.textPrimary)
+                Text("takes")
+                    .font(.system(.title3, design: .rounded).weight(.regular))
+                    .foregroundStyle(AppColors.textMuted)
             }
-        }
-    }
 
-    private func recordingCard(_ recording: PerformanceRecording) -> some View {
-        StudioCard(emphasisColor: AppColors.recording) {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(recording.takeName)
-                            .font(AppTypography.cardTitle)
-                        Text(song.title)
-                            .font(AppTypography.caption)
-                            .foregroundStyle(AppColors.textSecondary)
-                    }
-
-                    Spacer()
-
-                    if let resultType = recording.resultType {
-                        Text(resultType.label)
-                            .font(AppTypography.caption)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(resultType.tint.opacity(0.18), in: Capsule())
-                    }
-                }
-
-                HStack {
-                    Label(Formatting.date(recording.recordedAt), systemImage: "calendar")
-                    Spacer()
-                    Label("\(recording.bpmAtRecording ?? 0) BPM", systemImage: "metronome")
-                    Spacer()
-                    Label(Formatting.duration(recording.durationSec), systemImage: "clock")
-                }
+            Text("\(phrase.name) · \(song.title)")
                 .font(AppTypography.caption)
                 .foregroundStyle(AppColors.textSecondary)
-
-                HStack {
-                    Label(viewModel.hasLinkedMemo(for: recording) ? "メモあり" : "メモなし", systemImage: "note.text")
-                    Spacer()
-                    Label(
-                        viewModel.selectedRecordingIDs.contains(recording.id) ? "比較対象" : "未選択",
-                        systemImage: viewModel.selectedRecordingIDs.contains(recording.id) ? "checkmark.circle.fill" : "circle"
-                    )
-                }
-                .font(AppTypography.caption)
-                .foregroundStyle(AppColors.textSecondary)
-
-                HStack(spacing: AppSpacing.medium) {
-                    Button {
-                        viewModel.playSingle(recording)
-                    } label: {
-                        Label(
-                            viewModel.playingRecordingID == recording.id ? "停止" : "演奏録音を聞く",
-                            systemImage: viewModel.playingRecordingID == recording.id ? "stop.fill" : "play.fill"
-                        )
-                    }
-                    .buttonStyle(FilledStudioButtonStyle(tint: AppColors.surfaceGlass))
-
-                    Button {
-                        viewModel.toggleSelection(recording)
-                    } label: {
-                        Label(
-                            viewModel.selectedRecordingIDs.contains(recording.id) ? "選択解除" : "比較に追加",
-                            systemImage: viewModel.selectedRecordingIDs.contains(recording.id) ? "checkmark.circle.fill" : "plus.circle"
-                        )
-                    }
-                    .buttonStyle(FilledStudioButtonStyle(tint: AppColors.accentSoft))
-
-                    Button {
-                        viewModel.delete(recording)
-                    } label: {
-                        Label("削除", systemImage: "trash")
-                    }
-                    .buttonStyle(FilledStudioButtonStyle(tint: AppColors.recording))
-                }
-            }
-        }
-    }
-
-    private func selectedBadge(index: Int, recording: PerformanceRecording?) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("比較 \(index)")
-                .font(AppTypography.caption)
-                .foregroundStyle(AppColors.textSecondary)
-            Text(recording?.takeName ?? "未選択")
-                .font(.system(.headline, design: .rounded).weight(.semibold))
+                .lineLimit(1)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
+        .padding(.horizontal, AppSpacing.screenHorizontal)
+        .padding(.top, AppSpacing.medium)
+        .padding(.bottom, AppSpacing.xLarge)
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(AppColors.surfaceGlass.opacity(0.84))
+            RadialGradient(
+                colors: [
+                    AppColors.recording.opacity(0.22),
+                    Color.clear
+                ],
+                center: UnitPoint(x: 0.1, y: 0.0),
+                startRadius: 10,
+                endRadius: 380
+            )
+            .ignoresSafeArea(edges: .top)
         )
+    }
+
+    // MARK: - Compare
+
+    private var compareBlock: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.medium) {
+            HStack {
+                Text("COMPARE")
+                    .font(AppTypography.eyebrow)
+                    .tracking(2)
+                    .foregroundStyle(AppColors.textMuted)
+                Spacer()
+                Text(viewModel.compareTitle)
+                    .font(AppTypography.caption)
+                    .foregroundStyle(AppColors.textMuted)
+            }
+
+            HStack(spacing: 10) {
+                selectedSlot(index: 1, recording: viewModel.selectedRecordings.first)
+                selectedSlot(index: 2, recording: viewModel.selectedRecordings.dropFirst().first)
+            }
+
+            HStack(spacing: AppSpacing.small) {
+                Button {
+                    viewModel.playComparison()
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "arrow.left.arrow.right")
+                            .font(.system(size: 13, weight: .bold))
+                        Text("比較再生")
+                            .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                    }
+                    .foregroundStyle(Color.black)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(AppColors.accent)
+                    )
+                }
+                .buttonStyle(.plain)
+
+                Button {
+                    viewModel.stopPreview()
+                } label: {
+                    Image(systemName: "stop.fill")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(AppColors.textPrimary)
+                        .frame(width: 44, height: 44)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(AppColors.surface)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .stroke(AppColors.border, lineWidth: 1)
+                        )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private func selectedSlot(index: Int, recording: PerformanceRecording?) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("SLOT \(index)")
+                .font(AppTypography.eyebrow)
+                .tracking(1)
+                .foregroundStyle(AppColors.textMuted)
+            Text(recording?.takeName ?? "未選択")
+                .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                .foregroundStyle(recording == nil ? AppColors.textMuted : AppColors.textPrimary)
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(AppColors.surface.opacity(0.7))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(
+                    recording != nil ? AppColors.accent.opacity(0.4) : AppColors.border,
+                    lineWidth: 1
+                )
+        )
+    }
+
+    // MARK: - Recordings
+
+    private var recordingsSection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("TAKES")
+                .font(AppTypography.eyebrow)
+                .tracking(2)
+                .foregroundStyle(AppColors.textMuted)
+                .padding(.horizontal, AppSpacing.screenHorizontal)
+                .padding(.bottom, AppSpacing.small)
+
+            if viewModel.recordings.isEmpty {
+                Text("演奏録音はまだありません。PracticePlayer から録音してみましょう。")
+                    .font(AppTypography.caption)
+                    .foregroundStyle(AppColors.textMuted)
+                    .padding(.horizontal, AppSpacing.screenHorizontal)
+                    .padding(.vertical, AppSpacing.large)
+            } else {
+                ForEach(Array(viewModel.recordings.enumerated()), id: \.element.id) { index, recording in
+                    recordingRow(recording)
+                        .contextMenu {
+                            Button {
+                                viewModel.toggleSelection(recording)
+                            } label: {
+                                Label(
+                                    viewModel.selectedRecordingIDs.contains(recording.id) ? "選択解除" : "比較に追加",
+                                    systemImage: viewModel.selectedRecordingIDs.contains(recording.id) ? "checkmark.circle.fill" : "plus.circle"
+                                )
+                            }
+                            Button(role: .destructive) {
+                                recordingToDelete = recording
+                            } label: {
+                                Label("削除", systemImage: "trash")
+                            }
+                        }
+
+                    if index < viewModel.recordings.count - 1 {
+                        Rectangle()
+                            .fill(AppColors.border)
+                            .frame(height: 0.5)
+                            .padding(.leading, AppSpacing.screenHorizontal + 22)
+                    }
+                }
+            }
+        }
+    }
+
+    private func recordingRow(_ recording: PerformanceRecording) -> some View {
+        let isSelected = viewModel.selectedRecordingIDs.contains(recording.id)
+        let isPlaying = viewModel.playingRecordingID == recording.id
+
+        return HStack(spacing: 14) {
+            Circle()
+                .fill(recording.resultType?.tint ?? AppColors.recording)
+                .frame(width: 8, height: 8)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(recording.takeName)
+                    .font(.system(.body, design: .rounded).weight(.semibold))
+                    .foregroundStyle(AppColors.textPrimary)
+                    .lineLimit(1)
+
+                HStack(spacing: 6) {
+                    Text(Formatting.date(recording.recordedAt))
+                    Text("·")
+                    Text("\(recording.bpmAtRecording ?? 0) BPM")
+                    Text("·")
+                    Text(Formatting.duration(recording.durationSec))
+                    if let resultType = recording.resultType {
+                        Text("·")
+                        Text(resultType.label).foregroundStyle(resultType.tint)
+                    }
+                }
+                .font(AppTypography.caption)
+                .foregroundStyle(AppColors.textMuted)
+                .lineLimit(1)
+            }
+
+            Spacer(minLength: 8)
+
+            Button {
+                viewModel.toggleSelection(recording)
+            } label: {
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "plus.circle")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(isSelected ? AppColors.accent : AppColors.textMuted)
+            }
+            .buttonStyle(.plain)
+
+            Button {
+                viewModel.playSingle(recording)
+            } label: {
+                Image(systemName: isPlaying ? "stop.fill" : "play.fill")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(AppColors.textPrimary)
+                    .frame(width: 34, height: 34)
+                    .background(
+                        Circle().fill(isPlaying ? AppColors.recording : AppColors.surface)
+                    )
+                    .overlay(Circle().stroke(AppColors.border, lineWidth: 1))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, AppSpacing.screenHorizontal)
+        .padding(.vertical, 12)
+        .contentShape(Rectangle())
     }
 }

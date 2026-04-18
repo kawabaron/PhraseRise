@@ -21,72 +21,31 @@ struct SourceSaveConfirmView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(alignment: .leading, spacing: AppSpacing.large) {
-                StudioSectionHeader(
-                    "練習音源を保存",
-                    subtitle: "録音した練習音源を確認して Song として保存します。"
-                )
+            ScrollView {
+                VStack(spacing: 0) {
+                    heroSection
 
-                WaveformPlaceholderView(values: viewModel.waveformValues, showHead: false)
-                    .frame(height: 190)
+                    waveformBlock
+                        .padding(.top, AppSpacing.large)
 
-                StudioCard(emphasisColor: AppColors.recording) {
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            metric("録音時間", value: Formatting.duration(viewModel.draft?.durationSec ?? 0))
-                            Spacer()
-                            metric("保存形式", value: "micRecorded")
-                        }
+                    detailsBlock
+                        .padding(.top, AppSpacing.xLarge)
 
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("音源名")
-                                .font(AppTypography.caption)
-                                .foregroundStyle(AppColors.textSecondary)
+                    actionRow
+                        .padding(.horizontal, AppSpacing.screenHorizontal)
+                        .padding(.top, AppSpacing.xLarge)
 
-                            TextField("練習音源名", text: $viewModel.title)
-                                .textFieldStyle(.plain)
-                                .padding(14)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                        .fill(AppColors.surfaceGlass.opacity(0.82))
-                                )
-                        }
+                    Button("破棄") {
+                        viewModel.discardDraftIfNeeded()
+                        dismiss()
                     }
+                    .font(AppTypography.body)
+                    .foregroundStyle(AppColors.textSecondary)
+                    .padding(.top, AppSpacing.medium)
                 }
-
-                HStack(spacing: AppSpacing.medium) {
-                    Button {
-                        viewModel.togglePreview()
-                    } label: {
-                        Label(
-                            viewModel.isPreviewPlaying ? "プレビュー停止" : "プレビュー再生",
-                            systemImage: viewModel.isPreviewPlaying ? "stop.fill" : "play.fill"
-                        )
-                    }
-                    .buttonStyle(FilledStudioButtonStyle(tint: AppColors.surfaceGlass))
-
-                    Button {
-                        if let song = viewModel.saveSong() {
-                            onSave(song)
-                            dismiss()
-                        }
-                    } label: {
-                        Label("練習音源を保存", systemImage: "square.and.arrow.down.fill")
-                    }
-                    .buttonStyle(FilledStudioButtonStyle(tint: AppColors.accent))
-                }
-
-                Button("破棄") {
-                    viewModel.discardDraftIfNeeded()
-                    dismiss()
-                }
-                .font(AppTypography.body)
-                .foregroundStyle(AppColors.textSecondary)
-
-                Spacer()
+                .padding(.bottom, 60)
             }
-            .padding(AppSpacing.large)
-            .navigationTitle("保存確認")
+            .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .studioScreen()
             .task {
@@ -114,13 +73,144 @@ struct SourceSaveConfirmView: View {
         }
     }
 
-    private func metric(_ title: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(title)
+    private var heroSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("SAVE SOURCE")
+                .font(AppTypography.eyebrow)
+                .tracking(2)
+                .foregroundStyle(AppColors.recording)
+
+            Text("練習音源を保存")
+                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .foregroundStyle(AppColors.textPrimary)
+
+            Text("録音した練習音源を確認して Song として保存します。")
                 .font(AppTypography.caption)
                 .foregroundStyle(AppColors.textSecondary)
-            Text(value)
-                .font(.system(.headline, design: .rounded).weight(.semibold))
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, AppSpacing.screenHorizontal)
+        .padding(.top, AppSpacing.medium)
+        .padding(.bottom, AppSpacing.large)
+        .background(
+            RadialGradient(
+                colors: [
+                    AppColors.recording.opacity(0.20),
+                    Color.clear
+                ],
+                center: UnitPoint(x: 0.1, y: 0.0),
+                startRadius: 10,
+                endRadius: 320
+            )
+            .ignoresSafeArea(edges: .top)
+        )
+    }
+
+    private var waveformBlock: some View {
+        WaveformPlaceholderView(values: viewModel.waveformValues, showHead: false)
+            .frame(height: 160)
+            .padding(.horizontal, AppSpacing.screenHorizontal)
+    }
+
+    private var detailsBlock: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.medium) {
+            HStack(spacing: 10) {
+                detailPill(label: "録音時間", value: Formatting.duration(viewModel.draft?.durationSec ?? 0))
+                detailPill(label: "形式", value: "micRecorded")
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, AppSpacing.screenHorizontal)
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("音源名")
+                    .font(AppTypography.caption)
+                    .foregroundStyle(AppColors.textSecondary)
+                TextField("練習音源名", text: $viewModel.title)
+                    .textFieldStyle(.plain)
+                    .font(AppTypography.body)
+                    .foregroundStyle(AppColors.textPrimary)
+                    .padding(14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(AppColors.surface.opacity(0.7))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .stroke(AppColors.border, lineWidth: 1)
+                    )
+            }
+            .padding(.horizontal, AppSpacing.screenHorizontal)
+        }
+    }
+
+    private var actionRow: some View {
+        HStack(spacing: AppSpacing.small) {
+            Button {
+                viewModel.togglePreview()
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: viewModel.isPreviewPlaying ? "stop.fill" : "play.fill")
+                        .font(.system(size: 13, weight: .bold))
+                    Text(viewModel.isPreviewPlaying ? "停止" : "プレビュー")
+                        .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                }
+                .foregroundStyle(AppColors.textPrimary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(AppColors.surface)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(AppColors.border, lineWidth: 1)
+                )
+            }
+            .buttonStyle(.plain)
+
+            Button {
+                if let song = viewModel.saveSong() {
+                    onSave(song)
+                    dismiss()
+                }
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "square.and.arrow.down.fill")
+                        .font(.system(size: 13, weight: .bold))
+                    Text("保存")
+                        .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                }
+                .foregroundStyle(Color.black)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(AppColors.accent)
+                )
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private func detailPill(label: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label)
+                .font(AppTypography.eyebrow)
+                .tracking(1)
+                .foregroundStyle(AppColors.textMuted)
+            Text(value)
+                .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                .foregroundStyle(AppColors.textPrimary)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(AppColors.surface.opacity(0.7))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(AppColors.border, lineWidth: 1)
+        )
     }
 }
