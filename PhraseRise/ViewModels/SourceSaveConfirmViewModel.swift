@@ -19,7 +19,10 @@ final class SourceSaveConfirmViewModel {
     var errorMessage: String?
     private(set) var didSave = false
 
-    private nonisolated(unsafe) var progressTimer: Timer?
+    @ObservationIgnored
+    private lazy var progressTicker = PlaybackProgressTicker(interval: 0.05) { [weak self] in
+        self?.refreshPreviewProgress()
+    }
 
     init(
         draftID: UUID,
@@ -36,10 +39,6 @@ final class SourceSaveConfirmViewModel {
         self.audioPreviewService.onFinish = { [weak self] in
             self?.handlePreviewFinished()
         }
-    }
-
-    deinit {
-        progressTimer?.invalidate()
     }
 
     func load() {
@@ -67,9 +66,9 @@ final class SourceSaveConfirmViewModel {
             isPreviewPlaying = nowPlaying
             if nowPlaying {
                 previewRatio = 0
-                startProgressTimer()
+                progressTicker.start()
             } else {
-                stopProgressTimer()
+                progressTicker.stop()
                 previewRatio = 0
             }
         } catch {
@@ -98,28 +97,14 @@ final class SourceSaveConfirmViewModel {
     func stopPreview() {
         audioPreviewService.stopPreview()
         isPreviewPlaying = false
-        stopProgressTimer()
+        progressTicker.stop()
         previewRatio = 0
     }
 
     private func handlePreviewFinished() {
         isPreviewPlaying = false
-        stopProgressTimer()
+        progressTicker.stop()
         previewRatio = 0
-    }
-
-    private func startProgressTimer() {
-        progressTimer?.invalidate()
-        progressTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
-            Task { @MainActor in
-                self?.refreshPreviewProgress()
-            }
-        }
-    }
-
-    private func stopProgressTimer() {
-        progressTimer?.invalidate()
-        progressTimer = nil
     }
 
     private func refreshPreviewProgress() {

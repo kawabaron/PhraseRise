@@ -106,8 +106,7 @@ struct SourceSaveConfirmView: View {
     private var waveformBlock: some View {
         WaveformPlaceholderView(
             values: viewModel.waveformValues,
-            headPosition: viewModel.isPreviewPlaying ? viewModel.previewRatio : nil,
-            showHead: viewModel.isPreviewPlaying
+            headPosition: viewModel.isPreviewPlaying ? viewModel.previewRatio : nil
         )
         .frame(height: 110)
         .padding(.horizontal, AppSpacing.screenHorizontal)

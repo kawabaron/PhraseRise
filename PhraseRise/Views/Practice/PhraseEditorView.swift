@@ -106,7 +106,6 @@ struct PhraseEditorView: View {
                 values: viewModel.waveformValues,
                 selection: viewModel.startRatio ... viewModel.endRatio,
                 headPosition: viewModel.isPlaying ? viewModel.playheadRatio : nil,
-                showHead: viewModel.isPlaying,
                 onSelectionChange: { range in
                     let lower = min(max(range.lowerBound, 0), 0.98)
                     let upper = max(min(range.upperBound, 1), lower + 0.02)

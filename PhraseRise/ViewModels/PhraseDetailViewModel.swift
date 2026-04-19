@@ -14,17 +14,16 @@ final class PhraseDetailViewModel {
     var progress: Double = 0
     var errorMessage: String?
 
-    private nonisolated(unsafe) var progressTimer: Timer?
+    @ObservationIgnored
+    private lazy var progressTicker = PlaybackProgressTicker(interval: 0.1) { [weak self] in
+        self?.checkProgress()
+    }
 
     init(phrase: Phrase, song: Song, dependencies: AppDependencies) {
         self.phrase = phrase
         self.song = song
         self.dependencies = dependencies
         refresh()
-    }
-
-    deinit {
-        progressTimer?.invalidate()
     }
 
     var isPremium: Bool {
@@ -75,31 +74,17 @@ final class PhraseDetailViewModel {
             )
             isPlaying = true
             progress = 0
-            startTimer()
+            progressTicker.start()
         } catch {
             errorMessage = error.localizedDescription
         }
     }
 
     func stopPlayback() {
-        stopTimer()
+        progressTicker.stop()
         dependencies.audioPlaybackService.stop()
         isPlaying = false
         progress = 0
-    }
-
-    private func startTimer() {
-        progressTimer?.invalidate()
-        progressTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
-            Task { @MainActor in
-                self?.checkProgress()
-            }
-        }
-    }
-
-    private func stopTimer() {
-        progressTimer?.invalidate()
-        progressTimer = nil
     }
 
     private func checkProgress() {

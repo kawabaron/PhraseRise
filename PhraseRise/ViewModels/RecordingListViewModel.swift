@@ -17,7 +17,10 @@ final class RecordingListViewModel {
     var errorMessage: String?
     var paywallMessage: String?
 
-    private nonisolated(unsafe) var progressTimer: Timer?
+    @ObservationIgnored
+    private lazy var progressTicker = PlaybackProgressTicker(interval: 0.05) { [weak self] in
+        self?.refreshProgress()
+    }
 
     init(phrase: Phrase, song: Song, dependencies: AppDependencies) {
         self.phrase = phrase
@@ -30,10 +33,6 @@ final class RecordingListViewModel {
         audioPreviewService.onFinish = { [weak self] in
             self?.handlePlaybackFinished()
         }
-    }
-
-    deinit {
-        progressTimer?.invalidate()
     }
 
     var isPremium: Bool {
@@ -76,9 +75,9 @@ final class RecordingListViewModel {
             playingRecordingID = isPlaying ? recording.id : nil
             playingProgress = 0
             if isPlaying {
-                startProgressTimer()
+                progressTicker.start()
             } else {
-                stopProgressTimer()
+                progressTicker.stop()
             }
         } catch {
             errorMessage = error.localizedDescription
@@ -105,27 +104,13 @@ final class RecordingListViewModel {
         audioPreviewService.stopPreview()
         playingRecordingID = nil
         playingProgress = 0
-        stopProgressTimer()
+        progressTicker.stop()
     }
 
     private func handlePlaybackFinished() {
         playingRecordingID = nil
         playingProgress = 0
-        stopProgressTimer()
-    }
-
-    private func startProgressTimer() {
-        progressTimer?.invalidate()
-        progressTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
-            Task { @MainActor in
-                self?.refreshProgress()
-            }
-        }
-    }
-
-    private func stopProgressTimer() {
-        progressTimer?.invalidate()
-        progressTimer = nil
+        progressTicker.stop()
     }
 
     private func refreshProgress() {

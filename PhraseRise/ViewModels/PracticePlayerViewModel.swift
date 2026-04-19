@@ -13,7 +13,10 @@ final class PracticePlayerViewModel {
     private let clickTrackService: ClickTrackService
     private let settingsRepository: SettingsRepository
 
-    private nonisolated(unsafe) var progressTimer: Timer?
+    @ObservationIgnored
+    private lazy var progressTicker = PlaybackProgressTicker(interval: 0.05) { [weak self] in
+        self?.refreshProgress()
+    }
     private let referenceBpm: Int
     private var countInTask: Task<Void, Never>?
 
@@ -58,10 +61,6 @@ final class PracticePlayerViewModel {
         refreshLatestRecordingSummary()
     }
 
-    deinit {
-        progressTimer?.invalidate()
-    }
-
     func toggleCountIn() {
         isCountInEnabled.toggle()
         let settings = settingsRepository.loadOrCreate()
@@ -96,11 +95,11 @@ final class PracticePlayerViewModel {
     func handleAppear() {
         audioPlaybackService.setCursor(loopRange.lowerBound)
         currentTimeSec = loopRange.lowerBound
-        startTimer()
+        progressTicker.start()
     }
 
     func handleDisappear() {
-        stopTimer()
+        progressTicker.stop()
         cancelCountIn()
         if performanceRecordingService.isRecording {
             performanceRecordingService.discardActiveRecording()
@@ -251,20 +250,6 @@ final class PracticePlayerViewModel {
         } catch {
             errorMessage = error.localizedDescription
         }
-    }
-
-    private func startTimer() {
-        progressTimer?.invalidate()
-        progressTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
-            Task { @MainActor in
-                self?.refreshProgress()
-            }
-        }
-    }
-
-    private func stopTimer() {
-        progressTimer?.invalidate()
-        progressTimer = nil
     }
 
     private func refreshProgress() {

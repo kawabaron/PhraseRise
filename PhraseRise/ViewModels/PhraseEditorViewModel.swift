@@ -10,7 +10,10 @@ final class PhraseEditorViewModel {
     private let subscriptionService: SubscriptionService
     private let audioPlaybackService: AudioPlaybackService
 
-    private nonisolated(unsafe) var progressTimer: Timer?
+    @ObservationIgnored
+    private lazy var progressTicker = PlaybackProgressTicker(interval: 0.05) { [weak self] in
+        self?.refreshProgress()
+    }
 
     var name: String
     var memo: String
@@ -40,10 +43,6 @@ final class PhraseEditorViewModel {
             startRatio = 0.18
             endRatio = min(0.42, song.durationSec > 0 ? 0.42 : 0.55)
         }
-    }
-
-    deinit {
-        progressTimer?.invalidate()
     }
 
     var waveformValues: [Double] {
@@ -90,31 +89,17 @@ final class PhraseEditorViewModel {
             )
             isPlaying = true
             playheadRatio = startRatio
-            startTimer()
+            progressTicker.start()
         } catch {
             errorMessage = error.localizedDescription
         }
     }
 
     func stopPlayback() {
-        stopTimer()
+        progressTicker.stop()
         audioPlaybackService.stop()
         isPlaying = false
         playheadRatio = 0
-    }
-
-    private func startTimer() {
-        progressTimer?.invalidate()
-        progressTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
-            Task { @MainActor in
-                self?.refreshProgress()
-            }
-        }
-    }
-
-    private func stopTimer() {
-        progressTimer?.invalidate()
-        progressTimer = nil
     }
 
     private func refreshProgress() {

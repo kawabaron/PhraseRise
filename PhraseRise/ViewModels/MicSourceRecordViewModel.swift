@@ -9,7 +9,10 @@ final class MicSourceRecordViewModel {
     private let draftRepository: SourceCaptureDraftRepository
     private let settingsRepository: SettingsRepository
 
-    private nonisolated(unsafe) var refreshTimer: Timer?
+    @ObservationIgnored
+    private lazy var progressTicker = PlaybackProgressTicker(interval: 0.12) { [weak self] in
+        self?.refreshMetrics()
+    }
 
     var permissionState: MicrophonePermissionState
     var isRecording = false
@@ -29,10 +32,6 @@ final class MicSourceRecordViewModel {
         self.draftRepository = draftRepository
         self.settingsRepository = settingsRepository
         permissionState = audioSessionCoordinator.microphonePermissionStatus()
-    }
-
-    deinit {
-        refreshTimer?.invalidate()
     }
 
     func requestPermissionIfNeeded() async {
@@ -55,7 +54,7 @@ final class MicSourceRecordViewModel {
             )
             isRecording = true
             isPaused = false
-            startRefreshTimer()
+            progressTicker.start()
             refreshMetrics()
         } catch {
             errorMessage = error.localizedDescription
@@ -79,7 +78,7 @@ final class MicSourceRecordViewModel {
     func stopCapture() -> UUID? {
         do {
             let output = try sourceCaptureService.stopCapture()
-            stopRefreshTimer()
+            progressTicker.stop()
             isRecording = false
             isPaused = false
             elapsedSec = output.durationSec
@@ -94,7 +93,7 @@ final class MicSourceRecordViewModel {
 
     func discardCapture() {
         sourceCaptureService.discardCapture()
-        stopRefreshTimer()
+        progressTicker.stop()
         isRecording = false
         isPaused = false
         elapsedSec = 0
@@ -103,20 +102,6 @@ final class MicSourceRecordViewModel {
 
     func openSettings() {
         audioSessionCoordinator.openAppSettings()
-    }
-
-    private func startRefreshTimer() {
-        refreshTimer?.invalidate()
-        refreshTimer = Timer.scheduledTimer(withTimeInterval: 0.12, repeats: true) { [weak self] _ in
-            Task { @MainActor in
-                self?.refreshMetrics()
-            }
-        }
-    }
-
-    private func stopRefreshTimer() {
-        refreshTimer?.invalidate()
-        refreshTimer = nil
     }
 
     private func refreshMetrics() {

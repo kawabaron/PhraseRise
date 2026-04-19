@@ -4,7 +4,6 @@ struct WaveformPlaceholderView: View {
     let values: [Double]
     var selection: ClosedRange<Double>?
     var headPosition: Double?
-    var showHead: Bool = true
     var onSelectionChange: ((ClosedRange<Double>) -> Void)?
 
     private let horizontalInset: CGFloat = 12
@@ -64,15 +63,14 @@ struct WaveformPlaceholderView: View {
                     staticHandle(x: horizontalInset + CGFloat(selection.upperBound) * usable, height: height)
                 }
 
-                if showHead {
-                    let head = CGFloat(headPosition ?? 0.5)
+                if let headPosition {
                     Rectangle()
                         .fill(Color.white.opacity(0.94))
                         .frame(width: 2)
                         .padding(.vertical, AppSpacing.small)
                         .shadow(color: Color.white.opacity(0.18), radius: 5, x: 0, y: 0)
                         .position(
-                            x: horizontalInset + head * usable,
+                            x: horizontalInset + CGFloat(headPosition) * usable,
                             y: height / 2
                         )
                 }
@@ -133,7 +131,7 @@ struct WaveformPlaceholderView: View {
     }
 
     private func barColor(for ratio: Double) -> Color {
-        let isPlayed = showHead && headPosition.map { ratio <= $0 } ?? false
+        let isPlayed = headPosition.map { ratio <= $0 } ?? false
 
         guard let selection else {
             if isPlayed {

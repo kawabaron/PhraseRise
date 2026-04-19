@@ -40,6 +40,7 @@ final class ClickTrackService {
 
         let totalSleepNs = UInt64(Double(beatCount) * beatInterval * 1_000_000_000)
         try? await Task.sleep(nanoseconds: totalSleepNs)
+        scheduledTasks.removeAll()
     }
 
     func cancelPending() {

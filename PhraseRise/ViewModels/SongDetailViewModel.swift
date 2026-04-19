@@ -14,7 +14,10 @@ final class SongDetailViewModel {
     var isSongPlaying = false
     var songPlaybackRatio: Double = 0
 
-    private nonisolated(unsafe) var progressTimer: Timer?
+    @ObservationIgnored
+    private lazy var progressTicker = PlaybackProgressTicker(interval: 0.1) { [weak self] in
+        self?.checkPlaybackProgress()
+    }
     private var playingStartTimeSec: Double = 0
     private var playingEndTimeSec: Double = 0
 
@@ -22,10 +25,6 @@ final class SongDetailViewModel {
         self.song = song
         self.dependencies = dependencies
         refresh()
-    }
-
-    deinit {
-        progressTimer?.invalidate()
     }
 
     func refresh() {
@@ -63,7 +62,7 @@ final class SongDetailViewModel {
             playingStartTimeSec = phrase.startTimeSec
             playingEndTimeSec = phrase.endTimeSec
             playingPhraseProgress = 0
-            startTimer()
+            progressTicker.start()
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -87,14 +86,14 @@ final class SongDetailViewModel {
             playingStartTimeSec = 0
             playingEndTimeSec = song.durationSec
             songPlaybackRatio = 0
-            startTimer()
+            progressTicker.start()
         } catch {
             errorMessage = error.localizedDescription
         }
     }
 
     func stopPlayback() {
-        stopTimer()
+        progressTicker.stop()
         dependencies.audioPlaybackService.stop()
         playingPhraseID = nil
         playingPhraseProgress = 0
@@ -106,20 +105,6 @@ final class SongDetailViewModel {
 
     var waveformValues: [Double] {
         song.waveformOverview.isEmpty ? Array(repeating: 0.36, count: 42) : song.waveformOverview
-    }
-
-    private func startTimer() {
-        progressTimer?.invalidate()
-        progressTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
-            Task { @MainActor in
-                self?.checkPlaybackProgress()
-            }
-        }
-    }
-
-    private func stopTimer() {
-        progressTimer?.invalidate()
-        progressTimer = nil
     }
 
     private func checkPlaybackProgress() {

@@ -109,8 +109,7 @@ struct SongDetailView: View {
 
             WaveformPlaceholderView(
                 values: viewModel.waveformValues,
-                headPosition: viewModel.isSongPlaying ? viewModel.songPlaybackRatio : nil,
-                showHead: viewModel.isSongPlaying
+                headPosition: viewModel.isSongPlaying ? viewModel.songPlaybackRatio : nil
             )
             .frame(height: 120)
             .padding(.top, AppSpacing.small)
