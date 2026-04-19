@@ -86,21 +86,13 @@ struct PhraseDetailView: View {
                 )
                 Spacer(minLength: 0)
 
-                Button {
+                ProgressPlayButton(
+                    isPlaying: viewModel.isPlaying,
+                    progress: viewModel.progress,
+                    size: 44
+                ) {
                     viewModel.togglePlayback()
-                } label: {
-                    Image(systemName: viewModel.isPlaying ? "stop.fill" : "play.fill")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundStyle(AppColors.textPrimary)
-                        .frame(width: 40, height: 40)
-                        .background(
-                            Circle().fill(
-                                viewModel.isPlaying ? AppColors.recording : AppColors.surface
-                            )
-                        )
-                        .overlay(Circle().stroke(AppColors.border, lineWidth: 1))
                 }
-                .buttonStyle(.plain)
             }
 
             if let memo = viewModel.phrase.memo, !memo.isEmpty {

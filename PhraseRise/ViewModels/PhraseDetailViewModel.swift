@@ -11,6 +11,7 @@ final class PhraseDetailViewModel {
     var practiceRecords: [PracticeRecord] = []
     var recordings: [PerformanceRecording] = []
     var isPlaying = false
+    var progress: Double = 0
     var errorMessage: String?
 
     private nonisolated(unsafe) var progressTimer: Timer?
@@ -73,6 +74,7 @@ final class PhraseDetailViewModel {
                 rate: 1
             )
             isPlaying = true
+            progress = 0
             startTimer()
         } catch {
             errorMessage = error.localizedDescription
@@ -83,6 +85,7 @@ final class PhraseDetailViewModel {
         stopTimer()
         dependencies.audioPlaybackService.stop()
         isPlaying = false
+        progress = 0
     }
 
     private func startTimer() {
@@ -102,6 +105,8 @@ final class PhraseDetailViewModel {
     private func checkProgress() {
         guard isPlaying else { return }
         let now = dependencies.audioPlaybackService.playbackTime()
+        let duration = max(phrase.endTimeSec - phrase.startTimeSec, 0.01)
+        progress = min(max((now - phrase.startTimeSec) / duration, 0), 1)
         if now >= phrase.endTimeSec || !dependencies.audioPlaybackService.isPlaying {
             stopPlayback()
         }

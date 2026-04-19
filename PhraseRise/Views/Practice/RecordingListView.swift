@@ -302,19 +302,13 @@ struct RecordingListView: View {
             }
             .buttonStyle(.plain)
 
-            Button {
+            ProgressPlayButton(
+                isPlaying: isPlaying,
+                progress: isPlaying ? viewModel.playingProgress : 0,
+                size: 34
+            ) {
                 viewModel.playSingle(recording)
-            } label: {
-                Image(systemName: isPlaying ? "stop.fill" : "play.fill")
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundStyle(AppColors.textPrimary)
-                    .frame(width: 34, height: 34)
-                    .background(
-                        Circle().fill(isPlaying ? AppColors.recording : AppColors.surface)
-                    )
-                    .overlay(Circle().stroke(AppColors.border, lineWidth: 1))
             }
-            .buttonStyle(.plain)
         }
         .padding(.horizontal, AppSpacing.screenHorizontal)
         .padding(.vertical, 12)

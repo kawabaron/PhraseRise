@@ -278,23 +278,13 @@ struct SongDetailView: View {
 
             Spacer(minLength: 8)
 
-            Button {
+            ProgressPlayButton(
+                isPlaying: viewModel.playingPhraseID == phrase.id,
+                progress: viewModel.playingPhraseID == phrase.id ? viewModel.playingPhraseProgress : 0,
+                size: 34
+            ) {
                 viewModel.togglePhrasePlayback(phrase)
-            } label: {
-                Image(systemName: viewModel.playingPhraseID == phrase.id ? "stop.fill" : "play.fill")
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundStyle(AppColors.textPrimary)
-                    .frame(width: 34, height: 34)
-                    .background(
-                        Circle().fill(
-                            viewModel.playingPhraseID == phrase.id
-                                ? AppColors.recording
-                                : AppColors.surface
-                        )
-                    )
-                    .overlay(Circle().stroke(AppColors.border, lineWidth: 1))
             }
-            .buttonStyle(.plain)
 
             Image(systemName: "chevron.right")
                 .font(.system(size: 12, weight: .semibold))

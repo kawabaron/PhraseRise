@@ -13,8 +13,11 @@ final class RecordingListViewModel {
     var recordings: [PerformanceRecording] = []
     var selectedRecordingIDs: [UUID] = []
     var playingRecordingID: UUID?
+    var playingProgress: Double = 0
     var errorMessage: String?
     var paywallMessage: String?
+
+    private nonisolated(unsafe) var progressTimer: Timer?
 
     init(phrase: Phrase, song: Song, dependencies: AppDependencies) {
         self.phrase = phrase
@@ -24,6 +27,13 @@ final class RecordingListViewModel {
         audioPreviewService = dependencies.audioPreviewService
         subscriptionService = dependencies.subscriptionService
         refresh()
+        audioPreviewService.onFinish = { [weak self] in
+            self?.handlePlaybackFinished()
+        }
+    }
+
+    deinit {
+        progressTimer?.invalidate()
     }
 
     var isPremium: Bool {
@@ -64,6 +74,12 @@ final class RecordingListViewModel {
         do {
             let isPlaying = try audioPreviewService.togglePreview(for: recording.fileURL)
             playingRecordingID = isPlaying ? recording.id : nil
+            playingProgress = 0
+            if isPlaying {
+                startProgressTimer()
+            } else {
+                stopProgressTimer()
+            }
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -88,6 +104,34 @@ final class RecordingListViewModel {
     func stopPreview() {
         audioPreviewService.stopPreview()
         playingRecordingID = nil
+        playingProgress = 0
+        stopProgressTimer()
+    }
+
+    private func handlePlaybackFinished() {
+        playingRecordingID = nil
+        playingProgress = 0
+        stopProgressTimer()
+    }
+
+    private func startProgressTimer() {
+        progressTimer?.invalidate()
+        progressTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.refreshProgress()
+            }
+        }
+    }
+
+    private func stopProgressTimer() {
+        progressTimer?.invalidate()
+        progressTimer = nil
+    }
+
+    private func refreshProgress() {
+        let duration = audioPreviewService.duration
+        guard duration > 0 else { return }
+        playingProgress = min(max(audioPreviewService.currentTime / duration, 0), 1)
     }
 
     func startComparisonIfAllowed() -> Bool {

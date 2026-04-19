@@ -133,14 +133,19 @@ struct WaveformPlaceholderView: View {
     }
 
     private func barColor(for ratio: Double) -> Color {
+        let isPlayed = showHead && headPosition.map { ratio <= $0 } ?? false
+
         guard let selection else {
-            return AppColors.accent.opacity(0.86)
+            if isPlayed {
+                return AppColors.accent
+            }
+            return AppColors.accent.opacity(headPosition == nil ? 0.86 : 0.32)
         }
 
         if selection.contains(ratio) {
-            return AppColors.accent.opacity(0.92)
+            return isPlayed ? AppColors.accent : AppColors.accent.opacity(0.92)
         }
 
-        return Color.white.opacity(0.24)
+        return Color.white.opacity(isPlayed ? 0.45 : 0.24)
     }
 }
