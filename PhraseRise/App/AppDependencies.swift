@@ -18,7 +18,6 @@ final class AppDependencies {
     let sourceSongCreationService: SourceSongCreationService
     let audioPreviewService: AudioPreviewService
     let audioPlaybackService: AudioPlaybackService
-    let clickTrackService: ClickTrackService
     let performanceRecordingService: PerformanceRecordingService
     let phraseDeletionService: PhraseDeletionService
     let songDeletionService: SongDeletionService
@@ -47,7 +46,6 @@ final class AppDependencies {
         subscriptionService = SubscriptionService(subscriptionRepository: subscriptionRepository)
         audioPreviewService = AudioPreviewService(audioSessionCoordinator: audioSessionCoordinator)
         audioPlaybackService = AudioPlaybackService(audioSessionCoordinator: audioSessionCoordinator)
-        clickTrackService = ClickTrackService(audioSessionCoordinator: audioSessionCoordinator)
         performanceRecordingService = PerformanceRecordingService(
             audioSessionCoordinator: audioSessionCoordinator,
             performanceRecordingRepository: performanceRecordingRepository,

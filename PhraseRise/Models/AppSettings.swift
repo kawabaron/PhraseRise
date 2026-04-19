@@ -9,7 +9,6 @@ final class AppSettings {
     var reminderEnabled: Bool
     var showHeadphoneHint: Bool
     var recordingQualityPreset: String
-    var countInClickEnabled: Bool
 
     init(
         id: UUID = UUID(),
@@ -17,8 +16,7 @@ final class AppSettings {
         defaultLoopEnabled: Bool = true,
         reminderEnabled: Bool = false,
         showHeadphoneHint: Bool = true,
-        recordingQualityPreset: String = "high",
-        countInClickEnabled: Bool = false
+        recordingQualityPreset: String = "high"
     ) {
         self.id = id
         self.defaultTempoStep = defaultTempoStep
@@ -26,6 +24,5 @@ final class AppSettings {
         self.reminderEnabled = reminderEnabled
         self.showHeadphoneHint = showHeadphoneHint
         self.recordingQualityPreset = recordingQualityPreset
-        self.countInClickEnabled = countInClickEnabled
     }
 }

@@ -49,7 +49,7 @@ struct PracticePlayerView: View {
         .navigationBarTitleDisplayMode(.inline)
         .studioScreen()
         .sheet(isPresented: $isPresentingRecordSheet) {
-            PracticeRecordSheet(phrase: phrase, initialBpm: viewModel.bpm, dependencies: dependencies)
+            PracticeRecordSheet(phrase: phrase, initialBpm: viewModel.recordSheetInitialBpm, dependencies: dependencies)
         }
         .sheet(
             isPresented: Binding(
@@ -156,7 +156,7 @@ struct PracticePlayerView: View {
     private var transportBlock: some View {
         VStack(spacing: AppSpacing.small) {
             HStack(alignment: .top, spacing: AppSpacing.medium) {
-                tempoStack
+                speedStack
                     .frame(maxWidth: .infinity)
                 pitchStack
                     .frame(maxWidth: .infinity)
@@ -188,25 +188,26 @@ struct PracticePlayerView: View {
         .padding(.horizontal, AppSpacing.screenHorizontal)
     }
 
-    private var tempoStack: some View {
+    private var speedStack: some View {
         VStack(spacing: AppSpacing.xSmall) {
             HStack(alignment: .lastTextBaseline, spacing: 6) {
-                Text("\(viewModel.bpm)")
+                Text("\(viewModel.speedPercent)")
                     .font(.system(size: 44, weight: .bold, design: .rounded))
                     .foregroundStyle(AppColors.textPrimary)
-                Text("BPM")
+                    .monospacedDigit()
+                Text("%")
                     .font(.system(.subheadline, design: .rounded).weight(.regular))
                     .foregroundStyle(AppColors.textSecondary)
             }
 
             Stepper(
-                "テンポを調整",
+                "速度を調整",
                 value: Binding(
-                    get: { viewModel.bpm },
-                    set: { viewModel.setBpm($0) }
+                    get: { viewModel.speedPercent },
+                    set: { viewModel.setSpeedPercent($0) }
                 ),
-                in: 40 ... 240,
-                step: 1
+                in: PracticePlayerViewModel.speedPercentRange,
+                step: PracticePlayerViewModel.speedPercentStep
             )
             .tint(AppColors.accent)
             .labelsHidden()
@@ -246,8 +247,7 @@ struct PracticePlayerView: View {
     }
 
     private var transportIconName: String {
-        if viewModel.isCountingIn { return "metronome.fill" }
-        return viewModel.isPlaying ? "pause.fill" : "play.fill"
+        viewModel.isPlaying ? "pause.fill" : "play.fill"
     }
 
     private func transportSideButton(icon: String, action: @escaping () -> Void) -> some View {
@@ -289,34 +289,6 @@ struct PracticePlayerView: View {
                     .overlay(
                         Capsule().stroke(
                             viewModel.isLoopEnabled ? AppColors.accent.opacity(0.4) : AppColors.border,
-                            lineWidth: 1
-                        )
-                    )
-                }
-                .buttonStyle(.plain)
-
-                Button {
-                    viewModel.toggleCountIn()
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "metronome")
-                            .font(.system(size: 12, weight: .semibold))
-                        Text(viewModel.isCountingIn ? "カウント中" : "クリック")
-                            .font(AppTypography.caption)
-                    }
-                    .foregroundStyle(viewModel.isCountInEnabled ? AppColors.accent : AppColors.textSecondary)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(
-                        Capsule().fill(
-                            viewModel.isCountInEnabled
-                                ? AppColors.accent.opacity(0.15)
-                                : AppColors.surface.opacity(0.7)
-                        )
-                    )
-                    .overlay(
-                        Capsule().stroke(
-                            viewModel.isCountInEnabled ? AppColors.accent.opacity(0.4) : AppColors.border,
                             lineWidth: 1
                         )
                     )
