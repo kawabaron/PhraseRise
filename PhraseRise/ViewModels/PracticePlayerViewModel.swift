@@ -10,12 +10,17 @@ final class PracticePlayerViewModel {
     private let performanceRecordingService: PerformanceRecordingService
     private let phraseLoopService: PhraseLoopService
     private let performanceRecordingRepository: PerformanceRecordingRepository
+    private let clickTrackService: ClickTrackService
+    private let settingsRepository: SettingsRepository
 
     private nonisolated(unsafe) var progressTimer: Timer?
     private let referenceBpm: Int
+    private var countInTask: Task<Void, Never>?
 
     var isPlaying = false
     var isLoopEnabled: Bool
+    var isCountInEnabled: Bool
+    var isCountingIn = false
     var isRecording = false
     var bpm: Int
     var pitchSemitones: Int = 0
@@ -35,13 +40,17 @@ final class PracticePlayerViewModel {
         performanceRecordingService = dependencies.performanceRecordingService
         phraseLoopService = dependencies.phraseLoopService
         performanceRecordingRepository = dependencies.performanceRecordingRepository
+        clickTrackService = dependencies.clickTrackService
+        settingsRepository = dependencies.settingsRepository
 
         let initialRange = dependencies.phraseLoopService.initialRange(for: phrase, song: song)
         let initialBpm = phrase.recommendedStartBpm ?? phrase.lastStableBpm ?? phrase.targetBpm ?? 88
         loopRange = initialRange
         currentTimeSec = initialRange.lowerBound
         bpm = initialBpm
-        isLoopEnabled = dependencies.settingsRepository.loadOrCreate().defaultLoopEnabled
+        let settings = dependencies.settingsRepository.loadOrCreate()
+        isLoopEnabled = settings.defaultLoopEnabled
+        isCountInEnabled = settings.countInClickEnabled
         referenceBpm = max(40, phrase.targetBpm ?? phrase.bestStableBpm ?? phrase.lastStableBpm ?? initialBpm)
 
         hasLatestRecording = false
@@ -51,6 +60,13 @@ final class PracticePlayerViewModel {
 
     deinit {
         progressTimer?.invalidate()
+    }
+
+    func toggleCountIn() {
+        isCountInEnabled.toggle()
+        let settings = settingsRepository.loadOrCreate()
+        settings.countInClickEnabled = isCountInEnabled
+        settingsRepository.save(settings)
     }
 
     var playbackRate: Float {
@@ -85,6 +101,7 @@ final class PracticePlayerViewModel {
 
     func handleDisappear() {
         stopTimer()
+        cancelCountIn()
         if performanceRecordingService.isRecording {
             performanceRecordingService.discardActiveRecording()
         }
@@ -94,6 +111,11 @@ final class PracticePlayerViewModel {
     }
 
     func togglePlayback() {
+        if isCountingIn {
+            cancelCountIn()
+            return
+        }
+
         if isPlaying {
             audioPlaybackService.pause()
             currentTimeSec = audioPlaybackService.playbackTime()
@@ -105,6 +127,14 @@ final class PracticePlayerViewModel {
             ? loopRange.lowerBound
             : currentTimeSec
 
+        if isCountInEnabled {
+            startCountInThenPlay(from: startTime)
+        } else {
+            startActualPlayback(from: startTime)
+        }
+    }
+
+    private func startActualPlayback(from startTime: Double) {
         do {
             try audioPlaybackService.play(url: song.localFileURL, from: startTime, rate: playbackRate)
             currentTimeSec = startTime
@@ -112,6 +142,25 @@ final class PracticePlayerViewModel {
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+
+    private func startCountInThenPlay(from startTime: Double) {
+        isCountingIn = true
+        let clickBpm = max(40, bpm)
+        countInTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            await self.clickTrackService.playCountIn(bpm: clickBpm, beatCount: 4)
+            guard !Task.isCancelled, self.isCountingIn else { return }
+            self.isCountingIn = false
+            self.startActualPlayback(from: startTime)
+        }
+    }
+
+    private func cancelCountIn() {
+        countInTask?.cancel()
+        countInTask = nil
+        clickTrackService.cancelPending()
+        isCountingIn = false
     }
 
     func seek(by deltaSec: Double) {

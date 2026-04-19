@@ -170,7 +170,7 @@ struct PracticePlayerView: View {
                 Button {
                     viewModel.togglePlayback()
                 } label: {
-                    Image(systemName: viewModel.isPlaying ? "pause.fill" : "play.fill")
+                    Image(systemName: transportIconName)
                         .font(.system(size: 26, weight: .bold))
                         .foregroundStyle(Color.black)
                         .frame(width: 72, height: 72)
@@ -245,6 +245,11 @@ struct PracticePlayerView: View {
         return "\(value)"
     }
 
+    private var transportIconName: String {
+        if viewModel.isCountingIn { return "metronome.fill" }
+        return viewModel.isPlaying ? "pause.fill" : "play.fill"
+    }
+
     private func transportSideButton(icon: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: icon)
@@ -261,7 +266,7 @@ struct PracticePlayerView: View {
 
     private var loopBlock: some View {
         VStack(spacing: AppSpacing.small) {
-            HStack {
+            HStack(spacing: AppSpacing.xSmall) {
                 Button {
                     viewModel.toggleLoop()
                 } label: {
@@ -284,6 +289,34 @@ struct PracticePlayerView: View {
                     .overlay(
                         Capsule().stroke(
                             viewModel.isLoopEnabled ? AppColors.accent.opacity(0.4) : AppColors.border,
+                            lineWidth: 1
+                        )
+                    )
+                }
+                .buttonStyle(.plain)
+
+                Button {
+                    viewModel.toggleCountIn()
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "metronome")
+                            .font(.system(size: 12, weight: .semibold))
+                        Text(viewModel.isCountingIn ? "カウント中" : "クリック")
+                            .font(AppTypography.caption)
+                    }
+                    .foregroundStyle(viewModel.isCountInEnabled ? AppColors.accent : AppColors.textSecondary)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(
+                        Capsule().fill(
+                            viewModel.isCountInEnabled
+                                ? AppColors.accent.opacity(0.15)
+                                : AppColors.surface.opacity(0.7)
+                        )
+                    )
+                    .overlay(
+                        Capsule().stroke(
+                            viewModel.isCountInEnabled ? AppColors.accent.opacity(0.4) : AppColors.border,
                             lineWidth: 1
                         )
                     )
