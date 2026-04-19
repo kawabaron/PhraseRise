@@ -10,6 +10,8 @@ final class SongDetailViewModel {
     var phrases: [Phrase] = []
     var errorMessage: String?
     var playingPhraseID: UUID?
+    var isSongPlaying = false
+    var songPlaybackRatio: Double = 0
 
     private nonisolated(unsafe) var progressTimer: Timer?
     private var playingEndTimeSec: Double = 0
@@ -47,9 +49,7 @@ final class SongDetailViewModel {
             return
         }
 
-        if playingPhraseID != nil {
-            stopPlayback()
-        }
+        stopPlayback()
 
         do {
             try dependencies.audioPlaybackService.play(
@@ -65,10 +65,35 @@ final class SongDetailViewModel {
         }
     }
 
+    func toggleSongPlayback() {
+        if isSongPlaying {
+            stopPlayback()
+            return
+        }
+
+        stopPlayback()
+
+        do {
+            try dependencies.audioPlaybackService.play(
+                url: song.localFileURL,
+                from: 0,
+                rate: 1
+            )
+            isSongPlaying = true
+            playingEndTimeSec = song.durationSec
+            songPlaybackRatio = 0
+            startTimer()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
     func stopPlayback() {
         stopTimer()
         dependencies.audioPlaybackService.stop()
         playingPhraseID = nil
+        isSongPlaying = false
+        songPlaybackRatio = 0
         playingEndTimeSec = 0
     }
 
@@ -91,8 +116,11 @@ final class SongDetailViewModel {
     }
 
     private func checkPlaybackProgress() {
-        guard playingPhraseID != nil else { return }
+        guard playingPhraseID != nil || isSongPlaying else { return }
         let now = dependencies.audioPlaybackService.playbackTime()
+        if isSongPlaying, song.durationSec > 0 {
+            songPlaybackRatio = min(max(now / song.durationSec, 0), 1)
+        }
         if now >= playingEndTimeSec || !dependencies.audioPlaybackService.isPlaying {
             stopPlayback()
         }

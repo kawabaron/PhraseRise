@@ -10,12 +10,20 @@ final class PhraseDetailViewModel {
 
     var practiceRecords: [PracticeRecord] = []
     var recordings: [PerformanceRecording] = []
+    var isPlaying = false
+    var errorMessage: String?
+
+    private nonisolated(unsafe) var progressTimer: Timer?
 
     init(phrase: Phrase, song: Song, dependencies: AppDependencies) {
         self.phrase = phrase
         self.song = song
         self.dependencies = dependencies
         refresh()
+    }
+
+    deinit {
+        progressTimer?.invalidate()
     }
 
     var isPremium: Bool {
@@ -50,5 +58,52 @@ final class PhraseDetailViewModel {
         let start = phrase.recommendedStartBpm.map { "\($0)" } ?? "--"
         let next = phrase.recommendedNextBpm.map { "\($0)" } ?? "--"
         return "次回開始 \(start) BPM / 次回目標 \(next) BPM"
+    }
+
+    func togglePlayback() {
+        if isPlaying {
+            stopPlayback()
+            return
+        }
+
+        do {
+            try dependencies.audioPlaybackService.play(
+                url: song.localFileURL,
+                from: phrase.startTimeSec,
+                rate: 1
+            )
+            isPlaying = true
+            startTimer()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func stopPlayback() {
+        stopTimer()
+        dependencies.audioPlaybackService.stop()
+        isPlaying = false
+    }
+
+    private func startTimer() {
+        progressTimer?.invalidate()
+        progressTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.checkProgress()
+            }
+        }
+    }
+
+    private func stopTimer() {
+        progressTimer?.invalidate()
+        progressTimer = nil
+    }
+
+    private func checkProgress() {
+        guard isPlaying else { return }
+        let now = dependencies.audioPlaybackService.playbackTime()
+        if now >= phrase.endTimeSec || !dependencies.audioPlaybackService.isPlaying {
+            stopPlayback()
+        }
     }
 }

@@ -100,7 +100,14 @@ struct PhraseEditorView: View {
     private var waveformBlock: some View {
         WaveformPlaceholderView(
             values: viewModel.waveformValues,
-            selection: viewModel.startRatio ... viewModel.endRatio
+            selection: viewModel.startRatio ... viewModel.endRatio,
+            showHead: false,
+            onSelectionChange: { range in
+                let lower = min(max(range.lowerBound, 0), 0.98)
+                let upper = max(min(range.upperBound, 1), lower + 0.02)
+                viewModel.startRatio = lower
+                viewModel.endRatio = upper
+            }
         )
         .frame(height: 120)
         .padding(.horizontal, AppSpacing.screenHorizontal)

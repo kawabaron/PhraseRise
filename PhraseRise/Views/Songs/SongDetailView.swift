@@ -109,13 +109,34 @@ struct SongDetailView: View {
 
             WaveformPlaceholderView(
                 values: viewModel.waveformValues,
-                selection: 0.22 ... 0.40,
-                showHead: false
+                headPosition: viewModel.isSongPlaying ? viewModel.songPlaybackRatio : nil,
+                showHead: viewModel.isSongPlaying
             )
             .frame(height: 120)
             .padding(.top, AppSpacing.small)
 
             HStack(spacing: 16) {
+                Button {
+                    viewModel.toggleSongPlayback()
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: viewModel.isSongPlaying ? "stop.fill" : "play.fill")
+                            .font(.system(size: 12, weight: .bold))
+                        Text(viewModel.isSongPlaying ? "停止" : "再生")
+                            .font(.system(.caption, design: .rounded).weight(.semibold))
+                    }
+                    .foregroundStyle(AppColors.textPrimary)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(
+                        Capsule().fill(
+                            viewModel.isSongPlaying ? AppColors.recording : AppColors.surface
+                        )
+                    )
+                    .overlay(Capsule().stroke(AppColors.border, lineWidth: 1))
+                }
+                .buttonStyle(.plain)
+
                 metaLabel(
                     icon: "rectangle.split.3x1",
                     text: "\(viewModel.phrases.count) 練習区間"

@@ -43,6 +43,9 @@ struct PhraseDetailView: View {
         .task {
             viewModel.refresh()
         }
+        .onDisappear {
+            viewModel.stopPlayback()
+        }
     }
 
     // MARK: - Hero
@@ -82,6 +85,22 @@ struct PhraseDetailView: View {
                     value: bpmText(viewModel.phrase.targetBpm)
                 )
                 Spacer(minLength: 0)
+
+                Button {
+                    viewModel.togglePlayback()
+                } label: {
+                    Image(systemName: viewModel.isPlaying ? "stop.fill" : "play.fill")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(AppColors.textPrimary)
+                        .frame(width: 40, height: 40)
+                        .background(
+                            Circle().fill(
+                                viewModel.isPlaying ? AppColors.recording : AppColors.surface
+                            )
+                        )
+                        .overlay(Circle().stroke(AppColors.border, lineWidth: 1))
+                }
+                .buttonStyle(.plain)
             }
 
             if let memo = viewModel.phrase.memo, !memo.isEmpty {

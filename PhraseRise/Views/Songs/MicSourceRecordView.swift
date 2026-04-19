@@ -128,8 +128,8 @@ struct MicSourceRecordView: View {
                     .monospacedDigit()
             }
 
-            ProgressView(value: viewModel.inputLevel)
-                .tint(AppColors.recording)
+            InputLevelMeterView(level: viewModel.inputLevel, isActive: viewModel.isRecording)
+                .frame(height: 48)
         }
         .padding(.horizontal, AppSpacing.screenHorizontal)
     }

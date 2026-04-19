@@ -15,8 +15,11 @@ final class SourceSaveConfirmViewModel {
     var waveformValues: [Double] = Array(repeating: 0.2, count: 48)
     var isSaving = false
     var isPreviewPlaying = false
+    var previewRatio: Double = 0
     var errorMessage: String?
     private(set) var didSave = false
+
+    private nonisolated(unsafe) var progressTimer: Timer?
 
     init(
         draftID: UUID,
@@ -30,6 +33,13 @@ final class SourceSaveConfirmViewModel {
         self.sourceSongCreationService = sourceSongCreationService
         self.waveformAnalysisService = waveformAnalysisService
         self.audioPreviewService = audioPreviewService
+        self.audioPreviewService.onFinish = { [weak self] in
+            self?.handlePreviewFinished()
+        }
+    }
+
+    deinit {
+        progressTimer?.invalidate()
     }
 
     func load() {
@@ -53,7 +63,15 @@ final class SourceSaveConfirmViewModel {
     func togglePreview() {
         guard let draft else { return }
         do {
-            isPreviewPlaying = try audioPreviewService.togglePreview(for: draft.tempFileURL)
+            let nowPlaying = try audioPreviewService.togglePreview(for: draft.tempFileURL)
+            isPreviewPlaying = nowPlaying
+            if nowPlaying {
+                previewRatio = 0
+                startProgressTimer()
+            } else {
+                stopProgressTimer()
+                previewRatio = 0
+            }
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -80,6 +98,34 @@ final class SourceSaveConfirmViewModel {
     func stopPreview() {
         audioPreviewService.stopPreview()
         isPreviewPlaying = false
+        stopProgressTimer()
+        previewRatio = 0
+    }
+
+    private func handlePreviewFinished() {
+        isPreviewPlaying = false
+        stopProgressTimer()
+        previewRatio = 0
+    }
+
+    private func startProgressTimer() {
+        progressTimer?.invalidate()
+        progressTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.refreshPreviewProgress()
+            }
+        }
+    }
+
+    private func stopProgressTimer() {
+        progressTimer?.invalidate()
+        progressTimer = nil
+    }
+
+    private func refreshPreviewProgress() {
+        let duration = audioPreviewService.duration
+        guard duration > 0 else { return }
+        previewRatio = min(max(audioPreviewService.currentTime / duration, 0), 1)
     }
 
     func discardDraftIfNeeded() {
