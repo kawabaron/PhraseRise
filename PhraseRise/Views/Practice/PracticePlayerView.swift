@@ -22,15 +22,15 @@ struct PracticePlayerView: View {
             waveformBlock
                 .padding(.top, AppSpacing.medium)
 
-            Spacer(minLength: AppSpacing.medium)
+            Spacer(minLength: AppSpacing.small)
 
             transportBlock
 
-            Spacer(minLength: AppSpacing.medium)
+            Spacer(minLength: AppSpacing.small)
 
             loopBlock
 
-            Spacer(minLength: AppSpacing.medium)
+            Spacer(minLength: AppSpacing.small)
 
             actionRow
                 .padding(.horizontal, AppSpacing.screenHorizontal)
@@ -134,7 +134,10 @@ struct PracticePlayerView: View {
         WaveformPlaceholderView(
             values: song.waveformOverview.isEmpty ? Array(repeating: 0.42, count: 52) : song.waveformOverview,
             selection: viewModel.selectionRatio,
-            headPosition: viewModel.headRatio
+            headPosition: viewModel.headRatio,
+            onSelectionChange: { ratio in
+                viewModel.setLoopRange(fromRatio: ratio)
+            }
         )
         .frame(height: 110)
         .padding(.horizontal, AppSpacing.screenHorizontal)
@@ -144,26 +147,12 @@ struct PracticePlayerView: View {
 
     private var transportBlock: some View {
         VStack(spacing: AppSpacing.small) {
-            HStack(alignment: .lastTextBaseline, spacing: 6) {
-                Text("\(viewModel.bpm)")
-                    .font(.system(size: 56, weight: .bold, design: .rounded))
-                    .foregroundStyle(AppColors.textPrimary)
-                Text("BPM")
-                    .font(.system(.title3, design: .rounded).weight(.regular))
-                    .foregroundStyle(AppColors.textSecondary)
+            HStack(alignment: .top, spacing: AppSpacing.medium) {
+                tempoStack
+                    .frame(maxWidth: .infinity)
+                pitchStack
+                    .frame(maxWidth: .infinity)
             }
-
-            Stepper(
-                "テンポを調整",
-                value: Binding(
-                    get: { viewModel.bpm },
-                    set: { viewModel.setBpm($0) }
-                ),
-                in: 40 ... 240,
-                step: 1
-            )
-            .tint(AppColors.accent)
-            .labelsHidden()
 
             HStack(spacing: AppSpacing.large) {
                 transportSideButton(icon: "gobackward.5") {
@@ -191,6 +180,63 @@ struct PracticePlayerView: View {
         .padding(.horizontal, AppSpacing.screenHorizontal)
     }
 
+    private var tempoStack: some View {
+        VStack(spacing: AppSpacing.xSmall) {
+            HStack(alignment: .lastTextBaseline, spacing: 6) {
+                Text("\(viewModel.bpm)")
+                    .font(.system(size: 44, weight: .bold, design: .rounded))
+                    .foregroundStyle(AppColors.textPrimary)
+                Text("BPM")
+                    .font(.system(.subheadline, design: .rounded).weight(.regular))
+                    .foregroundStyle(AppColors.textSecondary)
+            }
+
+            Stepper(
+                "テンポを調整",
+                value: Binding(
+                    get: { viewModel.bpm },
+                    set: { viewModel.setBpm($0) }
+                ),
+                in: 40 ... 240,
+                step: 1
+            )
+            .tint(AppColors.accent)
+            .labelsHidden()
+        }
+    }
+
+    private var pitchStack: some View {
+        VStack(spacing: AppSpacing.xSmall) {
+            HStack(alignment: .lastTextBaseline, spacing: 6) {
+                Text(pitchLabel)
+                    .font(.system(size: 44, weight: .bold, design: .rounded))
+                    .foregroundStyle(AppColors.textPrimary)
+                    .monospacedDigit()
+                Text("キー")
+                    .font(.system(.subheadline, design: .rounded).weight(.regular))
+                    .foregroundStyle(AppColors.textSecondary)
+            }
+
+            Stepper(
+                "キーを調整",
+                value: Binding(
+                    get: { viewModel.pitchSemitones },
+                    set: { viewModel.setPitch($0) }
+                ),
+                in: -12 ... 12,
+                step: 1
+            )
+            .tint(AppColors.accent)
+            .labelsHidden()
+        }
+    }
+
+    private var pitchLabel: String {
+        let value = viewModel.pitchSemitones
+        if value > 0 { return "+\(value)" }
+        return "\(value)"
+    }
+
     private func transportSideButton(icon: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: icon)
@@ -206,48 +252,54 @@ struct PracticePlayerView: View {
     // MARK: - Loop
 
     private var loopBlock: some View {
-        HStack(spacing: AppSpacing.medium) {
-            Button {
-                viewModel.toggleLoop()
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "repeat")
-                        .font(.system(size: 12, weight: .semibold))
-                    Text(viewModel.isLoopEnabled ? "ループ" : "ループ")
-                        .font(AppTypography.caption)
+        VStack(spacing: AppSpacing.small) {
+            HStack {
+                Button {
+                    viewModel.toggleLoop()
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "repeat")
+                            .font(.system(size: 12, weight: .semibold))
+                        Text("ループ")
+                            .font(AppTypography.caption)
+                    }
+                    .foregroundStyle(viewModel.isLoopEnabled ? AppColors.accent : AppColors.textSecondary)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(
+                        Capsule().fill(
+                            viewModel.isLoopEnabled
+                                ? AppColors.accent.opacity(0.15)
+                                : AppColors.surface.opacity(0.7)
+                        )
+                    )
+                    .overlay(
+                        Capsule().stroke(
+                            viewModel.isLoopEnabled ? AppColors.accent.opacity(0.4) : AppColors.border,
+                            lineWidth: 1
+                        )
+                    )
                 }
-                .foregroundStyle(viewModel.isLoopEnabled ? AppColors.accent : AppColors.textSecondary)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(
-                    Capsule().fill(
-                        viewModel.isLoopEnabled
-                            ? AppColors.accent.opacity(0.15)
-                            : AppColors.surface.opacity(0.7)
-                    )
+                .buttonStyle(.plain)
+
+                Spacer()
+            }
+
+            HStack(spacing: AppSpacing.medium) {
+                loopAdjuster(
+                    title: "開始",
+                    value: Formatting.duration(viewModel.loopRange.lowerBound),
+                    onMinus: { viewModel.nudgeLoopStart(by: -0.1) },
+                    onPlus: { viewModel.nudgeLoopStart(by: 0.1) }
                 )
-                .overlay(
-                    Capsule().stroke(
-                        viewModel.isLoopEnabled ? AppColors.accent.opacity(0.4) : AppColors.border,
-                        lineWidth: 1
-                    )
+
+                loopAdjuster(
+                    title: "終了",
+                    value: Formatting.duration(viewModel.loopRange.upperBound),
+                    onMinus: { viewModel.nudgeLoopEnd(by: -0.1) },
+                    onPlus: { viewModel.nudgeLoopEnd(by: 0.1) }
                 )
             }
-            .buttonStyle(.plain)
-
-            loopAdjuster(
-                title: "A",
-                value: Formatting.duration(viewModel.loopRange.lowerBound),
-                onMinus: { viewModel.nudgeLoopStart(by: -0.1) },
-                onPlus: { viewModel.nudgeLoopStart(by: 0.1) }
-            )
-
-            loopAdjuster(
-                title: "B",
-                value: Formatting.duration(viewModel.loopRange.upperBound),
-                onMinus: { viewModel.nudgeLoopEnd(by: -0.1) },
-                onPlus: { viewModel.nudgeLoopEnd(by: 0.1) }
-            )
         }
         .padding(.horizontal, AppSpacing.screenHorizontal)
     }
@@ -307,7 +359,7 @@ struct PracticePlayerView: View {
                     Image(systemName: "square.and.pencil")
                         .font(.system(size: 22, weight: .semibold))
                         .foregroundStyle(AppColors.accent)
-                    Text("記録を保存")
+                    Text("練習を記録")
                         .font(.system(.subheadline, design: .rounded).weight(.semibold))
                         .foregroundStyle(AppColors.textPrimary)
                 }

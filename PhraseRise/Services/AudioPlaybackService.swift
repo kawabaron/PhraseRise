@@ -12,6 +12,7 @@ final class AudioPlaybackService {
     private var currentFileURL: URL?
     private var scheduledStartTimeSec: Double = 0
     private var playbackRate: Float = 1
+    private var pitchCents: Float = 0
 
     private(set) var isPlaying = false
     private(set) var currentTimeSec: Double = 0
@@ -52,6 +53,7 @@ final class AudioPlaybackService {
         }
 
         timePitch.rate = rate
+        timePitch.pitch = pitchCents
         playbackRate = rate
         currentTimeSec = clampedTime
         scheduledStartTimeSec = clampedTime
@@ -72,6 +74,12 @@ final class AudioPlaybackService {
     func updateRate(_ rate: Float) {
         playbackRate = rate
         timePitch.rate = rate
+    }
+
+    func updatePitch(semitones: Int) {
+        let cents = Float(semitones) * 100
+        pitchCents = cents
+        timePitch.pitch = cents
     }
 
     func pause() {

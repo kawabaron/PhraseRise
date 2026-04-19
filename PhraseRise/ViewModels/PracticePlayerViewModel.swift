@@ -18,6 +18,7 @@ final class PracticePlayerViewModel {
     var isLoopEnabled: Bool
     var isRecording = false
     var bpm: Int
+    var pitchSemitones: Int = 0
     var currentTimeSec: Double
     var loopRange: ClosedRange<Double>
     var recordingElapsedSec: Double = 0
@@ -131,6 +132,29 @@ final class PracticePlayerViewModel {
     func setBpm(_ value: Int) {
         bpm = value
         audioPlaybackService.updateRate(playbackRate)
+    }
+
+    func setPitch(_ semitones: Int) {
+        let clamped = min(max(semitones, -12), 12)
+        pitchSemitones = clamped
+        audioPlaybackService.updatePitch(semitones: clamped)
+    }
+
+    func setLoopRange(fromRatio ratio: ClosedRange<Double>) {
+        let newStart = ratio.lowerBound * song.durationSec
+        let newEnd = ratio.upperBound * song.durationSec
+        loopRange = phraseLoopService.clampRange(
+            start: newStart,
+            end: newEnd,
+            songDurationSec: song.durationSec
+        )
+        if currentTimeSec < loopRange.lowerBound {
+            currentTimeSec = loopRange.lowerBound
+            audioPlaybackService.setCursor(currentTimeSec)
+        } else if currentTimeSec > loopRange.upperBound {
+            currentTimeSec = loopRange.upperBound
+            audioPlaybackService.setCursor(currentTimeSec)
+        }
     }
 
     func toggleLoop() {
