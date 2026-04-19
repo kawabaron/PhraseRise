@@ -12,8 +12,6 @@ struct StatsView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
-                heroSection
-
                 filtersStrip
                     .padding(.horizontal, AppSpacing.screenHorizontal)
                     .padding(.top, AppSpacing.large)
@@ -46,45 +44,6 @@ struct StatsView: View {
         ) {
             PaywallView(dependencies: dependencies, message: viewModel.paywallMessage)
         }
-    }
-
-    private var heroSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(viewModel.selectedPeriod.heroEyebrow.uppercased())
-                .font(AppTypography.eyebrow)
-                .tracking(2)
-                .foregroundStyle(AppColors.textMuted)
-
-            HStack(alignment: .lastTextBaseline, spacing: 8) {
-                Text("\(Int((viewModel.stableRate * 100).rounded()))")
-                    .font(.system(size: 96, weight: .bold, design: .rounded))
-                    .foregroundStyle(AppColors.textPrimary)
-                Text("%")
-                    .font(.system(size: 36, weight: .semibold, design: .rounded))
-                    .foregroundStyle(AppColors.textSecondary)
-                    .baselineOffset(4)
-            }
-
-            Text("安定率")
-                .font(AppTypography.caption)
-                .foregroundStyle(AppColors.textSecondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, AppSpacing.screenHorizontal)
-        .padding(.top, AppSpacing.medium)
-        .padding(.bottom, AppSpacing.xLarge)
-        .background(
-            RadialGradient(
-                colors: [
-                    AppColors.accent.opacity(0.22),
-                    Color.clear
-                ],
-                center: UnitPoint(x: 0.1, y: 0.0),
-                startRadius: 10,
-                endRadius: 380
-            )
-            .ignoresSafeArea(edges: .top)
-        )
     }
 
     private var filtersStrip: some View {
@@ -206,18 +165,5 @@ struct StatsView: View {
             return "\(hours)時間"
         }
         return "\(hours)時間\(remainder)分"
-    }
-}
-
-private extension StatsPeriodFilter {
-    var heroEyebrow: String {
-        switch self {
-        case .last7Days:
-            return "直近7日"
-        case .last30Days:
-            return "直近30日"
-        case .allTime:
-            return "全期間"
-        }
     }
 }

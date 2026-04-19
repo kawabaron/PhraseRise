@@ -159,8 +159,6 @@ struct PhraseDetailView: View {
         VStack(alignment: .leading, spacing: 0) {
             sectionEyebrow("成績")
 
-            metricRow("安定率", value: "\(viewModel.stableRate)%", valueTint: AppColors.warning)
-            hairline
             metricRow("練習時間", value: "\(viewModel.totalPracticeMinutes)分", valueTint: AppColors.textPrimary)
         }
     }

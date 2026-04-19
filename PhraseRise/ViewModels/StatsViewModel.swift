@@ -15,7 +15,6 @@ final class StatsViewModel {
 
     var totalPracticeCount = 0
     var totalPracticeSeconds = 0
-    var stableRate = 0.0
     var recordingCount = 0
     var paywallMessage: String?
 
@@ -109,9 +108,6 @@ final class StatsViewModel {
         totalPracticeCount = filteredRecords.count
         totalPracticeSeconds = filteredRecords.reduce(0) { $0 + $1.practiceDurationSec }
         recordingCount = filteredRecordings.count
-
-        let stableCount = filteredRecords.filter { $0.resultType == .stable }.count
-        stableRate = filteredRecords.isEmpty ? 0 : Double(stableCount) / Double(filteredRecords.count)
     }
 
     private func thresholdDate(for period: StatsPeriodFilter) -> Date? {

@@ -39,12 +39,6 @@ final class PhraseDetailViewModel {
         practiceRecords.reduce(0) { $0 + $1.practiceDurationSec } / 60
     }
 
-    var stableRate: Int {
-        guard !practiceRecords.isEmpty else { return 0 }
-        let stableCount = practiceRecords.filter { $0.resultType == .stable }.count
-        return Int((Double(stableCount) / Double(practiceRecords.count)) * 100)
-    }
-
     func togglePlayback() {
         if isPlaying {
             stopPlayback()
