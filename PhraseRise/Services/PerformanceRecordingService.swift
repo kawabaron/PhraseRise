@@ -33,6 +33,14 @@ final class PerformanceRecordingService {
         recorder?.currentTime ?? 0
     }
 
+    var inputLevel: Double {
+        guard let recorder else { return 0 }
+        recorder.updateMeters()
+        let power = recorder.averagePower(forChannel: 0)
+        let normalized = pow(10, power / 20)
+        return min(1, max(0, Double(normalized)))
+    }
+
     func startRecording(phraseID: UUID, bpm: Int?) async throws {
         let permission = await audioSessionCoordinator.requestMicrophonePermission()
         guard permission == .granted else {
@@ -60,6 +68,7 @@ final class PerformanceRecordingService {
             settings: recordingSettings(for: settingsRepository.loadOrCreate().recordingQualityPreset)
         )
 
+        recorder.isMeteringEnabled = true
         recorder.prepareToRecord()
         guard recorder.record() else {
             throw NSError(

@@ -32,6 +32,14 @@ struct PracticePlayerView: View {
 
             Spacer(minLength: AppSpacing.small)
 
+            if viewModel.isRecording {
+                InputLevelMeterView(level: viewModel.recordingInputLevel, isActive: true)
+                    .frame(height: 28)
+                    .padding(.horizontal, AppSpacing.screenHorizontal)
+                    .padding(.bottom, AppSpacing.xSmall)
+                    .transition(.opacity)
+            }
+
             actionRow
                 .padding(.horizontal, AppSpacing.screenHorizontal)
                 .padding(.bottom, AppSpacing.medium)

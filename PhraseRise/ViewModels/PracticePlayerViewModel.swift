@@ -22,6 +22,7 @@ final class PracticePlayerViewModel {
     var currentTimeSec: Double
     var loopRange: ClosedRange<Double>
     var recordingElapsedSec: Double = 0
+    var recordingInputLevel: Double = 0
     var latestRecordingSummary: String
     var hasLatestRecording: Bool
     var errorMessage: String?
@@ -220,6 +221,9 @@ final class PracticePlayerViewModel {
     private func refreshProgress() {
         if isRecording {
             recordingElapsedSec = performanceRecordingService.elapsedSec
+            recordingInputLevel = performanceRecordingService.inputLevel
+        } else if recordingInputLevel != 0 {
+            recordingInputLevel = 0
         }
 
         guard isPlaying else { return }

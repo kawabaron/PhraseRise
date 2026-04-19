@@ -8,12 +8,17 @@ final class PhraseEditorViewModel {
     private let existingPhrase: Phrase?
     private let phraseRepository: PhraseRepository
     private let subscriptionService: SubscriptionService
+    private let audioPlaybackService: AudioPlaybackService
+
+    private nonisolated(unsafe) var progressTimer: Timer?
 
     var name: String
     var memo: String
     var targetBpm: Int
     var startRatio: Double
     var endRatio: Double
+    var isPlaying = false
+    var playheadRatio: Double = 0
     var errorMessage: String?
     var shouldShowPaywall = false
 
@@ -22,6 +27,7 @@ final class PhraseEditorViewModel {
         existingPhrase = phrase
         phraseRepository = dependencies.phraseRepository
         subscriptionService = dependencies.subscriptionService
+        audioPlaybackService = dependencies.audioPlaybackService
 
         name = phrase?.name ?? "新しい練習区間"
         memo = phrase?.memo ?? ""
@@ -34,6 +40,10 @@ final class PhraseEditorViewModel {
             startRatio = 0.18
             endRatio = min(0.42, song.durationSec > 0 ? 0.42 : 0.55)
         }
+    }
+
+    deinit {
+        progressTimer?.invalidate()
     }
 
     var waveformValues: [Double] {
@@ -62,6 +72,60 @@ final class PhraseEditorViewModel {
         guard song.durationSec > 0 else { return }
         let next = endTimeSec + seconds
         endRatio = max(min(next / song.durationSec, 1), min(startRatio + 0.02, 1))
+    }
+
+    func togglePlayback() {
+        if isPlaying {
+            stopPlayback()
+            return
+        }
+
+        guard song.durationSec > 0 else { return }
+
+        do {
+            try audioPlaybackService.play(
+                url: song.localFileURL,
+                from: startTimeSec,
+                rate: 1
+            )
+            isPlaying = true
+            playheadRatio = startRatio
+            startTimer()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func stopPlayback() {
+        stopTimer()
+        audioPlaybackService.stop()
+        isPlaying = false
+        playheadRatio = 0
+    }
+
+    private func startTimer() {
+        progressTimer?.invalidate()
+        progressTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.refreshProgress()
+            }
+        }
+    }
+
+    private func stopTimer() {
+        progressTimer?.invalidate()
+        progressTimer = nil
+    }
+
+    private func refreshProgress() {
+        guard isPlaying else { return }
+        let now = audioPlaybackService.playbackTime()
+        if song.durationSec > 0 {
+            playheadRatio = min(max(now / song.durationSec, 0), 1)
+        }
+        if now >= endTimeSec || !audioPlaybackService.isPlaying {
+            stopPlayback()
+        }
     }
 
     func savePhrase() -> Phrase? {

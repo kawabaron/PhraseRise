@@ -62,6 +62,9 @@ struct PhraseEditorView: View {
         } message: {
             Text(viewModel.errorMessage ?? "不明なエラーです。")
         }
+        .onDisappear {
+            viewModel.stopPlayback()
+        }
     }
 
     // MARK: - Hero
@@ -98,19 +101,45 @@ struct PhraseEditorView: View {
     // MARK: - Sections
 
     private var waveformBlock: some View {
-        WaveformPlaceholderView(
-            values: viewModel.waveformValues,
-            selection: viewModel.startRatio ... viewModel.endRatio,
-            showHead: false,
-            onSelectionChange: { range in
-                let lower = min(max(range.lowerBound, 0), 0.98)
-                let upper = max(min(range.upperBound, 1), lower + 0.02)
-                viewModel.startRatio = lower
-                viewModel.endRatio = upper
+        VStack(spacing: AppSpacing.small) {
+            WaveformPlaceholderView(
+                values: viewModel.waveformValues,
+                selection: viewModel.startRatio ... viewModel.endRatio,
+                headPosition: viewModel.isPlaying ? viewModel.playheadRatio : nil,
+                showHead: viewModel.isPlaying,
+                onSelectionChange: { range in
+                    let lower = min(max(range.lowerBound, 0), 0.98)
+                    let upper = max(min(range.upperBound, 1), lower + 0.02)
+                    viewModel.startRatio = lower
+                    viewModel.endRatio = upper
+                }
+            )
+            .frame(height: 120)
+
+            HStack {
+                ProgressPlayButton(
+                    isPlaying: viewModel.isPlaying,
+                    progress: selectionProgress,
+                    size: 40,
+                    activeFill: AppColors.accent
+                ) {
+                    viewModel.togglePlayback()
+                }
+
+                Text(viewModel.isPlaying ? "A/B 区間を再生中" : "A/B 区間を再生")
+                    .font(AppTypography.caption)
+                    .foregroundStyle(AppColors.textSecondary)
+
+                Spacer()
             }
-        )
-        .frame(height: 120)
+        }
         .padding(.horizontal, AppSpacing.screenHorizontal)
+    }
+
+    private var selectionProgress: Double {
+        guard viewModel.isPlaying else { return 0 }
+        let span = max(viewModel.endRatio - viewModel.startRatio, 0.0001)
+        return min(max((viewModel.playheadRatio - viewModel.startRatio) / span, 0), 1)
     }
 
     private var rangeBlock: some View {
