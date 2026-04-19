@@ -105,6 +105,7 @@ final class MicSourceRecordViewModel {
     }
 
     private func refreshMetrics() {
+        sourceCaptureService.refreshInputLevel()
         elapsedSec = sourceCaptureService.elapsedSec
         inputLevel = sourceCaptureService.inputLevel
     }

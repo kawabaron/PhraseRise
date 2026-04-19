@@ -254,6 +254,7 @@ final class PracticePlayerViewModel {
 
     private func refreshProgress() {
         if isRecording {
+            performanceRecordingService.refreshInputLevel()
             recordingElapsedSec = performanceRecordingService.elapsedSec
             recordingInputLevel = performanceRecordingService.inputLevel
         } else if recordingInputLevel != 0 {

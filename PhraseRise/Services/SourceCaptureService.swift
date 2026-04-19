@@ -28,12 +28,18 @@ final class SourceCaptureService: NSObject {
         recorder?.currentTime ?? 0
     }
 
-    var inputLevel: Double {
-        guard let recorder else { return 0 }
+    private(set) var inputLevel: Double = 0
+
+    /// 呼び出し元のタイマーから定期的に叩いてもらい、最新のメーター値を `inputLevel` に反映する。
+    func refreshInputLevel() {
+        guard let recorder else {
+            inputLevel = 0
+            return
+        }
         recorder.updateMeters()
         let power = recorder.averagePower(forChannel: 0)
         let normalized = pow(10, power / 20)
-        return min(1, max(0, Double(normalized)))
+        inputLevel = min(1, max(0, Double(normalized)))
     }
 
     func startCapture(recordingQualityPreset: String) throws {

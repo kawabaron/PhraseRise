@@ -5,13 +5,16 @@ struct InputLevelMeterView: View {
     let isActive: Bool
 
     private let barCount = 24
+    // マイク入力の平均パワーは -20dB 付近で頭打ちになりがちなので、
+    // 表示上は少しブーストして視認しやすくする。
+    private let displayBoost = 1.35
 
     var body: some View {
         GeometryReader { geometry in
             let width = max(geometry.size.width, 1)
             let barSpacing: CGFloat = 4
             let barWidth = max((width - barSpacing * CGFloat(barCount - 1)) / CGFloat(barCount), 2)
-            let boostedLevel = min(1, max(0, level) * 1.35)
+            let boostedLevel = min(1, max(0, level) * displayBoost)
             let activeBars = Int(round(boostedLevel * Double(barCount)))
 
             HStack(alignment: .center, spacing: barSpacing) {

@@ -1,6 +1,9 @@
 import AVFoundation
 import Foundation
 
+/// 練習用の音源再生エンジン。レート・ピッチ変更、フレーム単位のシーク、区間ループに対応。
+/// AVAudioEngine + AVAudioUnitTimePitch で構成されている。
+/// 演奏録音や下書き等の単純なプレビューには `AudioPreviewService` を使う。
 @MainActor
 final class AudioPlaybackService {
     private let audioSessionCoordinator: AudioSessionCoordinator

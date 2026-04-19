@@ -1,6 +1,9 @@
 import AVFoundation
 import Foundation
 
+/// Fire-and-forget preview playback for short audio clips (演奏録音・キャプチャ下書き等)。
+/// AVAudioPlayer ベースでシンプルな開始/停止/完了通知のみ。
+/// レート・ピッチ変更や区間ループが必要な練習音源では `AudioPlaybackService` を使う。
 @MainActor
 final class AudioPreviewService: NSObject {
     private let audioSessionCoordinator: AudioSessionCoordinator
