@@ -56,10 +56,6 @@ final class PracticePlayerViewModel {
         Float(speedPercent) / 100.0
     }
 
-    var recordSheetInitialBpm: Int {
-        phrase.recommendedStartBpm ?? phrase.lastStableBpm ?? phrase.targetBpm ?? 88
-    }
-
     var selectionRatio: ClosedRange<Double> {
         phraseLoopService.selectionRatio(for: loopRange, songDurationSec: song.durationSec)
     }
@@ -70,10 +66,6 @@ final class PracticePlayerViewModel {
 
     var loopDurationLabel: String {
         Formatting.duration(loopRange.upperBound - loopRange.lowerBound)
-    }
-
-    var targetBpmLabel: String {
-        phrase.targetBpm.map { "\($0) BPM" } ?? "--"
     }
 
     func setSpeedPercent(_ value: Int) {
@@ -200,7 +192,7 @@ final class PracticePlayerViewModel {
         }
 
         do {
-            try await performanceRecordingService.startRecording(phraseID: phrase.id, bpm: nil)
+            try await performanceRecordingService.startRecording(phraseID: phrase.id)
             isRecording = true
             recordingElapsedSec = 0
         } catch {
@@ -259,8 +251,7 @@ final class PracticePlayerViewModel {
         let latestRecording = performanceRecordingRepository.fetch(phraseId: phrase.id).first
         hasLatestRecording = latestRecording != nil
         if let latestRecording {
-            let bpmText = latestRecording.bpmAtRecording.map { "\($0) BPM" } ?? "-- BPM"
-            latestRecordingSummary = "\(Formatting.date(latestRecording.recordedAt)) / \(bpmText)"
+            latestRecordingSummary = Formatting.date(latestRecording.recordedAt)
         } else {
             latestRecordingSummary = "演奏録音はまだありません"
         }

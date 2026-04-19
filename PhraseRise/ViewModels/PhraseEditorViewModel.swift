@@ -17,7 +17,6 @@ final class PhraseEditorViewModel {
 
     var name: String
     var memo: String
-    var targetBpm: Int
     var startRatio: Double
     var endRatio: Double
     var isPlaying = false
@@ -34,7 +33,6 @@ final class PhraseEditorViewModel {
 
         name = phrase?.name ?? "新しい練習区間"
         memo = phrase?.memo ?? ""
-        targetBpm = phrase?.targetBpm ?? 96
 
         if let phrase, song.durationSec > 0 {
             startRatio = min(max(phrase.startTimeSec / song.durationSec, 0), 1)
@@ -130,7 +128,6 @@ final class PhraseEditorViewModel {
             existingPhrase.memo = memo.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : memo
             existingPhrase.startTimeSec = startTimeSec
             existingPhrase.endTimeSec = endTimeSec
-            existingPhrase.targetBpm = targetBpm
             phraseRepository.save(existingPhrase)
             return existingPhrase
         }
@@ -151,11 +148,8 @@ final class PhraseEditorViewModel {
             memo: memo.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : memo,
             startTimeSec: startTimeSec,
             endTimeSec: endTimeSec,
-            targetBpm: targetBpm,
             priority: 1,
             status: .active,
-            recommendedStartBpm: max(40, targetBpm - 8),
-            recommendedNextBpm: targetBpm,
             nextPracticeDate: .now
         )
     }

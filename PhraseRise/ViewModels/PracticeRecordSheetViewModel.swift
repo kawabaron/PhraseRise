@@ -8,10 +8,7 @@ final class PracticeRecordSheetViewModel {
     private let phraseRepository: PhraseRepository
     private let practiceRecordRepository: PracticeRecordRepository
     private let performanceRecordingRepository: PerformanceRecordingRepository
-    private let suggestionEngine: PracticeSuggestionEngine
-    private let subscriptionService: SubscriptionService
 
-    var bpm: Int
     var resultType: PracticeResultType = .stable
     var durationMinutes = 10
     var memo = ""
@@ -19,18 +16,14 @@ final class PracticeRecordSheetViewModel {
     var latestRecordingSummary: String
     var errorMessage: String?
 
-    init(phrase: Phrase, initialBpm: Int, dependencies: AppDependencies) {
+    init(phrase: Phrase, dependencies: AppDependencies) {
         self.phrase = phrase
         phraseRepository = dependencies.phraseRepository
         practiceRecordRepository = dependencies.practiceRecordRepository
         performanceRecordingRepository = dependencies.performanceRecordingRepository
-        suggestionEngine = dependencies.suggestionEngine
-        subscriptionService = dependencies.subscriptionService
-        bpm = initialBpm
 
         if let latestRecording = performanceRecordingRepository.fetch(phraseId: phrase.id).first {
-            let bpmText = latestRecording.bpmAtRecording.map { "\($0) BPM" } ?? "-- BPM"
-            latestRecordingSummary = "\(Formatting.date(latestRecording.recordedAt)) / \(bpmText)"
+            latestRecordingSummary = Formatting.date(latestRecording.recordedAt)
         } else {
             latestRecordingSummary = "紐付け可能な演奏録音はありません"
             linkLatestRecording = false
@@ -46,7 +39,6 @@ final class PracticeRecordSheetViewModel {
         let latestRecording = linkLatestRecording ? performanceRecordingRepository.fetch(phraseId: phrase.id).first : nil
         let record = practiceRecordRepository.create(
             phraseId: phrase.id,
-            triedBpm: bpm,
             resultType: resultType,
             practiceDurationSec: durationMinutes * 60,
             notes: memo.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : memo,
@@ -56,9 +48,6 @@ final class PracticeRecordSheetViewModel {
         if let latestRecording {
             latestRecording.practiceRecordId = record.id
             latestRecording.resultType = resultType
-            if latestRecording.bpmAtRecording == nil {
-                latestRecording.bpmAtRecording = bpm
-            }
             performanceRecordingRepository.save(latestRecording)
         }
 
@@ -67,23 +56,7 @@ final class PracticeRecordSheetViewModel {
     }
 
     private func updatePhraseSummary() {
-        let suggestion = subscriptionService.suggestion(for: bpm, resultType: resultType, engine: suggestionEngine)
-
-        if resultType == .stable {
-            phrase.lastStableBpm = bpm
-            phrase.bestStableBpm = max(phrase.bestStableBpm ?? 0, bpm)
-        }
-
-        phrase.recommendedStartBpm = suggestion.nextStartBpm
-        phrase.recommendedNextBpm = suggestion.nextTargetBpm
         phrase.nextPracticeDate = .now
-
-        if let targetBpm = phrase.targetBpm, bpm >= targetBpm, resultType == .stable {
-            phrase.status = .mastered
-        } else if phrase.status == .mastered, resultType != .stable {
-            phrase.status = .active
-        }
-
         phraseRepository.save(phrase)
     }
 }

@@ -6,7 +6,6 @@ final class PracticeRecord {
     @Attribute(.unique) var id: UUID
     var phraseId: UUID
     var practicedAt: Date
-    var triedBpm: Int
     var resultTypeRaw: String
     var practiceDurationSec: Int
     var notes: String?
@@ -16,7 +15,6 @@ final class PracticeRecord {
         id: UUID = UUID(),
         phraseId: UUID,
         practicedAt: Date = .now,
-        triedBpm: Int,
         resultType: PracticeResultType,
         practiceDurationSec: Int,
         notes: String? = nil,
@@ -25,7 +23,6 @@ final class PracticeRecord {
         self.id = id
         self.phraseId = phraseId
         self.practicedAt = practicedAt
-        self.triedBpm = triedBpm
         self.resultTypeRaw = resultType.rawValue
         self.practiceDurationSec = practiceDurationSec
         self.notes = notes

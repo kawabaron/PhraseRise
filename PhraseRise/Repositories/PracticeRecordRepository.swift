@@ -28,7 +28,6 @@ final class PracticeRecordRepository {
     func create(
         phraseId: UUID,
         practicedAt: Date = .now,
-        triedBpm: Int,
         resultType: PracticeResultType,
         practiceDurationSec: Int,
         notes: String? = nil,
@@ -37,7 +36,6 @@ final class PracticeRecordRepository {
         let record = PracticeRecord(
             phraseId: phraseId,
             practicedAt: practicedAt,
-            triedBpm: triedBpm,
             resultType: resultType,
             practiceDurationSec: practiceDurationSec,
             notes: notes,

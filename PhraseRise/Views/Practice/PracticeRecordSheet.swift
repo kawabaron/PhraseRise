@@ -4,17 +4,14 @@ struct PracticeRecordSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var viewModel: PracticeRecordSheetViewModel
 
-    init(phrase: Phrase, initialBpm: Int, dependencies: AppDependencies) {
-        _viewModel = State(initialValue: PracticeRecordSheetViewModel(phrase: phrase, initialBpm: initialBpm, dependencies: dependencies))
+    init(phrase: Phrase, dependencies: AppDependencies) {
+        _viewModel = State(initialValue: PracticeRecordSheetViewModel(phrase: phrase, dependencies: dependencies))
     }
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 heroSection
-
-                bpmField
-                    .padding(.top, AppSpacing.medium)
 
                 resultField
                     .padding(.top, AppSpacing.medium)
@@ -95,21 +92,6 @@ struct PracticeRecordSheet: View {
             )
             .ignoresSafeArea(edges: .top)
         )
-    }
-
-    private var bpmField: some View {
-        fieldGroup(eyebrow: "達成 BPM") {
-            HStack {
-                Text("\(viewModel.bpm) BPM")
-                    .font(.system(.title3, design: .rounded).weight(.semibold))
-                    .foregroundStyle(AppColors.textPrimary)
-                Spacer()
-                Stepper("", value: $viewModel.bpm, in: 40 ... 240)
-                    .labelsHidden()
-                    .tint(AppColors.accent)
-            }
-            .padding(.vertical, 4)
-        }
     }
 
     private var resultField: some View {

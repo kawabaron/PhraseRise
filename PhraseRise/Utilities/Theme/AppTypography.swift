@@ -7,7 +7,6 @@ enum AppTypography {
     static let body = Font.system(.subheadline, design: .default)
     static let caption = Font.system(.footnote, design: .rounded)
     static let eyebrow = Font.system(.caption2, design: .rounded).weight(.bold)
-    static let bpmHero = Font.system(size: 38, weight: .bold, design: .rounded)
     static let heroMetric = Font.system(size: 28, weight: .bold, design: .rounded)
     static let metric = Font.system(size: 26, weight: .bold, design: .rounded)
 }

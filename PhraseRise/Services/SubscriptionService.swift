@@ -41,37 +41,6 @@ final class SubscriptionService {
         state.isPremium ? .allowed : .blocked(reason: "全期間グラフは Premium で利用できます。")
     }
 
-    func suggestion(
-        for bpm: Int,
-        resultType: PracticeResultType,
-        engine: PracticeSuggestionEngine
-    ) -> PracticeSuggestion {
-        guard state.isPremium else {
-            switch resultType {
-            case .stable:
-                return PracticeSuggestion(
-                    nextStartBpm: max(40, bpm - 1),
-                    nextTargetBpm: bpm + 1,
-                    note: "無料版の簡易提案です。次回は少しだけ上げて試しましょう。"
-                )
-            case .barely:
-                return PracticeSuggestion(
-                    nextStartBpm: bpm,
-                    nextTargetBpm: bpm,
-                    note: "無料版の簡易提案です。テンポを維持して安定感を固めましょう。"
-                )
-            case .failed:
-                return PracticeSuggestion(
-                    nextStartBpm: max(40, bpm - 3),
-                    nextTargetBpm: max(40, bpm - 1),
-                    note: "無料版の簡易提案です。少し落として弾き直しましょう。"
-                )
-            }
-        }
-
-        return engine.makeSuggestion(from: bpm, resultType: resultType)
-    }
-
     func enablePremiumDemo(productType: SubscriptionProductType = .lifetime) {
         let state = self.state
         state.isPremium = true

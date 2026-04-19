@@ -11,7 +11,6 @@ final class PerformanceRecordingService {
     private var recorder: AVAudioRecorder?
     private var activeFileURL: URL?
     private var activePhraseID: UUID?
-    private var activeBpm: Int?
 
     init(
         audioSessionCoordinator: AudioSessionCoordinator,
@@ -48,7 +47,7 @@ final class PerformanceRecordingService {
         inputLevel = min(1, max(0, Double(normalized)))
     }
 
-    func startRecording(phraseID: UUID, bpm: Int?) async throws {
+    func startRecording(phraseID: UUID) async throws {
         let permission = await audioSessionCoordinator.requestMicrophonePermission()
         guard permission == .granted else {
             throw NSError(
@@ -88,7 +87,6 @@ final class PerformanceRecordingService {
         self.recorder = recorder
         activeFileURL = outputURL
         activePhraseID = phraseID
-        activeBpm = bpm
     }
 
     func stopRecording() throws -> PerformanceRecording {
@@ -112,7 +110,6 @@ final class PerformanceRecordingService {
             try? FileManager.default.removeItem(at: activeFileURL)
             self.activeFileURL = nil
             self.activePhraseID = nil
-            self.activeBpm = nil
             throw NSError(
                 domain: "PhraseRise.PerformanceRecording",
                 code: 402,
@@ -128,14 +125,12 @@ final class PerformanceRecordingService {
             phraseId: activePhraseID,
             fileURL: activeFileURL,
             durationSec: duration,
-            bpmAtRecording: activeBpm,
             takeName: takeName,
             fileSizeBytes: fileSizeBytes
         )
 
         self.activeFileURL = nil
         self.activePhraseID = nil
-        self.activeBpm = nil
         return recording
     }
 
@@ -147,7 +142,6 @@ final class PerformanceRecordingService {
         recorder = nil
         self.activeFileURL = nil
         self.activePhraseID = nil
-        self.activeBpm = nil
     }
 
     private func recordingSettings(for preset: String) -> [String: Any] {

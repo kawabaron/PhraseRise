@@ -1,4 +1,3 @@
-import Charts
 import SwiftUI
 
 struct PhraseDetailView: View {
@@ -19,14 +18,7 @@ struct PhraseDetailView: View {
                     .padding(.horizontal, AppSpacing.screenHorizontal)
                     .padding(.top, AppSpacing.large)
 
-                suggestionNote
-                    .padding(.horizontal, AppSpacing.screenHorizontal)
-                    .padding(.top, AppSpacing.medium)
-
                 metricsList
-                    .padding(.top, AppSpacing.xLarge)
-
-                chartSection
                     .padding(.top, AppSpacing.xLarge)
 
                 historySection
@@ -79,10 +71,6 @@ struct PhraseDetailView: View {
                 heroPill(
                     label: "範囲",
                     value: "\(Formatting.duration(viewModel.phrase.startTimeSec)) – \(Formatting.duration(viewModel.phrase.endTimeSec))"
-                )
-                heroPill(
-                    label: "目標",
-                    value: bpmText(viewModel.phrase.targetBpm)
                 )
                 Spacer(minLength: 0)
 
@@ -165,37 +153,12 @@ struct PhraseDetailView: View {
         .buttonStyle(.plain)
     }
 
-    private var suggestionNote: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: "arrow.up.forward.circle.fill")
-                .font(.system(size: 14))
-                .foregroundStyle(AppColors.accent)
-                .padding(.top, 1)
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text("次回提案")
-                    .font(AppTypography.eyebrow)
-                    .tracking(1)
-                    .foregroundStyle(AppColors.textMuted)
-                Text(viewModel.nextSuggestionSummary)
-                    .font(AppTypography.body)
-                    .foregroundStyle(AppColors.textPrimary)
-            }
-
-            Spacer(minLength: 0)
-        }
-    }
-
     // MARK: - Metrics
 
     private var metricsList: some View {
         VStack(alignment: .leading, spacing: 0) {
             sectionEyebrow("成績")
 
-            metricRow("前回安定 BPM", value: bpmText(viewModel.phrase.lastStableBpm), valueTint: AppColors.accent)
-            hairline
-            metricRow("最高安定 BPM", value: bpmText(viewModel.phrase.bestStableBpm), valueTint: AppColors.success)
-            hairline
             metricRow("安定率", value: "\(viewModel.stableRate)%", valueTint: AppColors.warning)
             hairline
             metricRow("練習時間", value: "\(viewModel.totalPracticeMinutes)分", valueTint: AppColors.textPrimary)
@@ -214,59 +177,6 @@ struct PhraseDetailView: View {
         }
         .padding(.horizontal, AppSpacing.screenHorizontal)
         .padding(.vertical, 14)
-    }
-
-    // MARK: - Chart
-
-    private var chartSection: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.medium) {
-            sectionEyebrow("BPM 推移")
-
-            if viewModel.chartPoints.isEmpty {
-                Text("PracticeRecord を保存するとグラフが表示されます。")
-                    .font(AppTypography.caption)
-                    .foregroundStyle(AppColors.textMuted)
-                    .padding(.horizontal, AppSpacing.screenHorizontal)
-                    .padding(.vertical, AppSpacing.large)
-            } else {
-                Chart(viewModel.chartPoints) { point in
-                    AreaMark(
-                        x: .value("Date", point.label),
-                        y: .value("BPM", point.bpm)
-                    )
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [AppColors.accent.opacity(0.28), AppColors.accent.opacity(0.0)],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-
-                    LineMark(
-                        x: .value("Date", point.label),
-                        y: .value("BPM", point.bpm)
-                    )
-                    .foregroundStyle(AppColors.accent)
-                    .lineStyle(StrokeStyle(lineWidth: 2))
-
-                    PointMark(
-                        x: .value("Date", point.label),
-                        y: .value("BPM", point.bpm)
-                    )
-                    .foregroundStyle(AppColors.accent)
-                    .symbolSize(30)
-                }
-                .frame(height: 200)
-                .padding(.horizontal, AppSpacing.screenHorizontal)
-            }
-
-            if !viewModel.isPremium && viewModel.practiceRecords.count > 8 {
-                Text("無料版では直近の履歴を中心に表示しています。")
-                    .font(AppTypography.caption)
-                    .foregroundStyle(AppColors.textMuted)
-                    .padding(.horizontal, AppSpacing.screenHorizontal)
-            }
-        }
     }
 
     // MARK: - History
@@ -300,13 +210,11 @@ struct PhraseDetailView: View {
                 .frame(width: 8, height: 8)
 
             VStack(alignment: .leading, spacing: 3) {
-                Text("\(record.triedBpm) BPM")
+                Text(Formatting.date(record.practicedAt))
                     .font(.system(.body, design: .rounded).weight(.semibold))
                     .foregroundStyle(AppColors.textPrimary)
 
                 HStack(spacing: 6) {
-                    Text(Formatting.date(record.practicedAt))
-                    Text("·")
                     Text(record.resultType.label)
                         .foregroundStyle(record.resultType.tint)
                     Text("·")
@@ -372,9 +280,5 @@ struct PhraseDetailView: View {
             .fill(AppColors.border)
             .frame(height: 0.5)
             .padding(.leading, AppSpacing.screenHorizontal + 22)
-    }
-
-    private func bpmText(_ bpm: Int?) -> String {
-        bpm.map { "\($0) BPM" } ?? "--"
     }
 }

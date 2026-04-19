@@ -193,16 +193,6 @@ struct PhraseEditorView: View {
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
                         .stroke(AppColors.border, lineWidth: 1)
                 )
-
-            HStack {
-                Text("目標 \(viewModel.targetBpm) BPM")
-                    .font(.system(.body, design: .rounded).weight(.semibold))
-                    .foregroundStyle(AppColors.textPrimary)
-                Spacer()
-                Stepper("", value: $viewModel.targetBpm, in: 40 ... 240, step: 1)
-                    .labelsHidden()
-                    .tint(AppColors.accent)
-            }
         }
         .padding(.horizontal, AppSpacing.screenHorizontal)
     }

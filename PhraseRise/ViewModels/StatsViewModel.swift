@@ -17,7 +17,6 @@ final class StatsViewModel {
     var totalPracticeSeconds = 0
     var stableRate = 0.0
     var recordingCount = 0
-    var recentStableTrend: [StatsPoint] = []
     var paywallMessage: String?
 
     init(dependencies: AppDependencies) {
@@ -113,13 +112,6 @@ final class StatsViewModel {
 
         let stableCount = filteredRecords.filter { $0.resultType == .stable }.count
         stableRate = filteredRecords.isEmpty ? 0 : Double(stableCount) / Double(filteredRecords.count)
-
-        recentStableTrend = filteredRecords
-            .sorted { $0.practicedAt < $1.practicedAt }
-            .suffix(selectedPeriod == .last7Days ? 7 : 12)
-            .map {
-                StatsPoint(label: Formatting.date($0.practicedAt), bpm: $0.triedBpm)
-            }
     }
 
     private func thresholdDate(for period: StatsPeriodFilter) -> Date? {

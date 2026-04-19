@@ -49,7 +49,7 @@ struct PracticePlayerView: View {
         .navigationBarTitleDisplayMode(.inline)
         .studioScreen()
         .sheet(isPresented: $isPresentingRecordSheet) {
-            PracticeRecordSheet(phrase: phrase, initialBpm: viewModel.recordSheetInitialBpm, dependencies: dependencies)
+            PracticeRecordSheet(phrase: phrase, dependencies: dependencies)
         }
         .sheet(
             isPresented: Binding(

@@ -278,8 +278,6 @@ struct RecordingListView: View {
                 HStack(spacing: 6) {
                     Text(Formatting.date(recording.recordedAt))
                     Text("·")
-                    Text("\(recording.bpmAtRecording ?? 0) BPM")
-                    Text("·")
                     Text(Formatting.duration(recording.durationSec))
                     if let resultType = recording.resultType {
                         Text("·")

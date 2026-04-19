@@ -23,7 +23,6 @@ final class AppDependencies {
     let songDeletionService: SongDeletionService
     let phraseLoopService: PhraseLoopService
     let fileImportService: FileImportService
-    let suggestionEngine: PracticeSuggestionEngine
     let subscriptionService: SubscriptionService
 
     init(context: ModelContext) {
@@ -42,7 +41,6 @@ final class AppDependencies {
             draftRepository: sourceCaptureDraftRepository,
             waveformAnalysisService: waveformAnalysisService
         )
-        suggestionEngine = PracticeSuggestionEngine()
         subscriptionService = SubscriptionService(subscriptionRepository: subscriptionRepository)
         audioPreviewService = AudioPreviewService(audioSessionCoordinator: audioSessionCoordinator)
         audioPlaybackService = AudioPlaybackService(audioSessionCoordinator: audioSessionCoordinator)

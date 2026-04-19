@@ -1,4 +1,3 @@
-import Charts
 import SwiftUI
 
 struct StatsView: View {
@@ -20,9 +19,6 @@ struct StatsView: View {
                     .padding(.top, AppSpacing.large)
 
                 secondaryMetrics
-                    .padding(.top, AppSpacing.xLarge)
-
-                chartSection
                     .padding(.top, AppSpacing.xLarge)
 
                 if !viewModel.isPremium {
@@ -191,56 +187,8 @@ struct StatsView: View {
             .padding(.leading, AppSpacing.screenHorizontal)
     }
 
-    private var chartSection: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.medium) {
-            Text("BPM 推移")
-                .font(AppTypography.eyebrow)
-                .tracking(2)
-                .foregroundStyle(AppColors.textMuted)
-                .padding(.horizontal, AppSpacing.screenHorizontal)
-
-            if viewModel.recentStableTrend.isEmpty {
-                Text("練習記録が増えると、ここに BPM 推移が表示されます。")
-                    .font(AppTypography.caption)
-                    .foregroundStyle(AppColors.textMuted)
-                    .padding(.horizontal, AppSpacing.screenHorizontal)
-                    .padding(.vertical, AppSpacing.large)
-            } else {
-                Chart(viewModel.recentStableTrend) { point in
-                    AreaMark(
-                        x: .value("Date", point.label),
-                        y: .value("BPM", point.bpm)
-                    )
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [AppColors.accent.opacity(0.28), AppColors.accent.opacity(0.0)],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-
-                    LineMark(
-                        x: .value("Date", point.label),
-                        y: .value("BPM", point.bpm)
-                    )
-                    .foregroundStyle(AppColors.accent)
-                    .lineStyle(StrokeStyle(lineWidth: 2))
-
-                    PointMark(
-                        x: .value("Date", point.label),
-                        y: .value("BPM", point.bpm)
-                    )
-                    .foregroundStyle(AppColors.accent)
-                    .symbolSize(30)
-                }
-                .frame(height: 220)
-                .padding(.horizontal, AppSpacing.screenHorizontal)
-            }
-        }
-    }
-
     private var premiumHint: some View {
-        Text("全期間グラフと詳細な比較再生は Premium で利用できます。")
+        Text("全期間の集計と詳細な比較再生は Premium で利用できます。")
             .font(AppTypography.caption)
             .foregroundStyle(AppColors.textMuted)
             .frame(maxWidth: .infinity, alignment: .leading)

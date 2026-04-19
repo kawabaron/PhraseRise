@@ -38,13 +38,8 @@ final class PhraseRepository {
         memo: String? = nil,
         startTimeSec: Double,
         endTimeSec: Double,
-        targetBpm: Int? = nil,
         priority: Int = 1,
         status: PhraseStatus = .active,
-        lastStableBpm: Int? = nil,
-        bestStableBpm: Int? = nil,
-        recommendedStartBpm: Int? = nil,
-        recommendedNextBpm: Int? = nil,
         nextPracticeDate: Date? = nil
     ) -> Phrase {
         let phrase = Phrase(
@@ -53,11 +48,6 @@ final class PhraseRepository {
             memo: memo,
             startTimeSec: startTimeSec,
             endTimeSec: endTimeSec,
-            targetBpm: targetBpm,
-            lastStableBpm: lastStableBpm,
-            bestStableBpm: bestStableBpm,
-            recommendedStartBpm: recommendedStartBpm,
-            recommendedNextBpm: recommendedNextBpm,
             priority: priority,
             status: status,
             nextPracticeDate: nextPracticeDate

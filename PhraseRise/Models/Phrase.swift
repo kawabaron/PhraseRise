@@ -9,11 +9,6 @@ final class Phrase {
     var memo: String?
     var startTimeSec: Double
     var endTimeSec: Double
-    var targetBpm: Int?
-    var lastStableBpm: Int?
-    var bestStableBpm: Int?
-    var recommendedStartBpm: Int?
-    var recommendedNextBpm: Int?
     var priority: Int
     var statusRaw: String
     var nextPracticeDate: Date?
@@ -27,11 +22,6 @@ final class Phrase {
         memo: String? = nil,
         startTimeSec: Double,
         endTimeSec: Double,
-        targetBpm: Int? = nil,
-        lastStableBpm: Int? = nil,
-        bestStableBpm: Int? = nil,
-        recommendedStartBpm: Int? = nil,
-        recommendedNextBpm: Int? = nil,
         priority: Int = 1,
         status: PhraseStatus = .active,
         nextPracticeDate: Date? = nil,
@@ -44,11 +34,6 @@ final class Phrase {
         self.memo = memo
         self.startTimeSec = startTimeSec
         self.endTimeSec = endTimeSec
-        self.targetBpm = targetBpm
-        self.lastStableBpm = lastStableBpm
-        self.bestStableBpm = bestStableBpm
-        self.recommendedStartBpm = recommendedStartBpm
-        self.recommendedNextBpm = recommendedNextBpm
         self.priority = priority
         self.statusRaw = status.rawValue
         self.nextPracticeDate = nextPracticeDate

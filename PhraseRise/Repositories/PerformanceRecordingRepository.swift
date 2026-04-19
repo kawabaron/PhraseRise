@@ -31,7 +31,6 @@ final class PerformanceRecordingRepository {
         fileURL: URL,
         durationSec: Double,
         recordedAt: Date = .now,
-        bpmAtRecording: Int? = nil,
         resultType: PracticeResultType? = nil,
         takeName: String,
         fileSizeBytes: Int64 = 0
@@ -42,7 +41,6 @@ final class PerformanceRecordingRepository {
             fileURL: fileURL,
             durationSec: durationSec,
             recordedAt: recordedAt,
-            bpmAtRecording: bpmAtRecording,
             resultType: resultType,
             takeName: takeName,
             fileSizeBytes: fileSizeBytes

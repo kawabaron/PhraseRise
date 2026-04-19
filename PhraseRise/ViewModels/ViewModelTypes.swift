@@ -1,11 +1,5 @@
 import Foundation
 
-struct StatsPoint: Identifiable {
-    let id = UUID()
-    let label: String
-    let bpm: Int
-}
-
 enum StatsPeriodFilter: String, CaseIterable, Identifiable {
     case last7Days
     case last30Days

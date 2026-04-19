@@ -9,7 +9,6 @@ final class PerformanceRecording {
     var fileURL: URL
     var durationSec: Double
     var recordedAt: Date
-    var bpmAtRecording: Int?
     var resultTypeRaw: String?
     var takeName: String
     var fileSizeBytes: Int64
@@ -21,7 +20,6 @@ final class PerformanceRecording {
         fileURL: URL,
         durationSec: Double,
         recordedAt: Date = .now,
-        bpmAtRecording: Int? = nil,
         resultType: PracticeResultType? = nil,
         takeName: String,
         fileSizeBytes: Int64 = 0
@@ -32,7 +30,6 @@ final class PerformanceRecording {
         self.fileURL = fileURL
         self.durationSec = durationSec
         self.recordedAt = recordedAt
-        self.bpmAtRecording = bpmAtRecording
         self.resultTypeRaw = resultType?.rawValue
         self.takeName = takeName
         self.fileSizeBytes = fileSizeBytes
