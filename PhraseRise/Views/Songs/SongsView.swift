@@ -1,3 +1,4 @@
+import PhotosUI
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -18,12 +19,30 @@ private enum SourceSheetRoute: Identifiable, Equatable {
     }
 }
 
+private struct PickedVideoFile: Transferable {
+    let url: URL
+
+    static var transferRepresentation: some TransferRepresentation {
+        FileRepresentation(contentType: .movie) { file in
+            SentTransferredFile(file.url)
+        } importing: { received in
+            let copyURL = FileManager.default.temporaryDirectory
+                .appendingPathComponent("picked-\(UUID().uuidString).\(received.file.pathExtension.isEmpty ? "mov" : received.file.pathExtension)")
+            try FileManager.default.copyItem(at: received.file, to: copyURL)
+            return PickedVideoFile(url: copyURL)
+        }
+    }
+}
+
 struct SongsView: View {
     let dependencies: AppDependencies
 
     @State private var viewModel: SongsViewModel
     @State private var route: SourceSheetRoute?
     @State private var showingFileImporter = false
+    @State private var showingPhotosPicker = false
+    @State private var selectedPhotoItem: PhotosPickerItem?
+    @State private var isImporting = false
     @State private var importErrorMessage: String?
 
     init(dependencies: AppDependencies) {
@@ -67,6 +86,12 @@ struct SongsView: View {
                             showingFileImporter = true
                         }
                     },
+                    onPickPhotoLibraryVideo: {
+                        route = nil
+                        DispatchQueue.main.async {
+                            showingPhotosPicker = true
+                        }
+                    },
                     onPickMicRecording: {
                         route = .micRecorder
                     }
@@ -87,17 +112,26 @@ struct SongsView: View {
         }
         .fileImporter(
             isPresented: $showingFileImporter,
-            allowedContentTypes: [.audio],
+            allowedContentTypes: [.audio, .movie, .mpeg4Movie, .quickTimeMovie],
             allowsMultipleSelection: false
         ) { result in
             do {
                 let urls = try result.get()
                 guard let url = urls.first else { return }
-                _ = try dependencies.fileImportService.importSong(from: url)
-                viewModel.refresh()
+                importSong(from: url)
             } catch {
                 importErrorMessage = error.localizedDescription
             }
+        }
+        .photosPicker(
+            isPresented: $showingPhotosPicker,
+            selection: $selectedPhotoItem,
+            matching: .videos
+        )
+        .onChange(of: selectedPhotoItem) { _, newItem in
+            guard let newItem else { return }
+            selectedPhotoItem = nil
+            Task { await importFromPhotoItem(newItem) }
         }
         .alert(
             "読み込みエラー",
@@ -114,11 +148,64 @@ struct SongsView: View {
         } message: {
             Text(importErrorMessage ?? "不明なエラーです。")
         }
+        .overlay {
+            if isImporting {
+                importingOverlay
+            }
+        }
         .task {
             viewModel.refresh()
         }
         .onAppear {
             viewModel.refresh()
+        }
+    }
+
+    private func importSong(from url: URL) {
+        isImporting = true
+        Task {
+            defer { isImporting = false }
+            do {
+                _ = try await dependencies.fileImportService.importSong(from: url)
+                viewModel.refresh()
+            } catch {
+                importErrorMessage = error.localizedDescription
+            }
+        }
+    }
+
+    private func importFromPhotoItem(_ item: PhotosPickerItem) async {
+        isImporting = true
+        defer { isImporting = false }
+        do {
+            guard let picked = try await item.loadTransferable(type: PickedVideoFile.self) else {
+                importErrorMessage = "動画の読み込みに失敗しました。"
+                return
+            }
+            defer { try? FileManager.default.removeItem(at: picked.url) }
+            _ = try await dependencies.fileImportService.importSong(from: picked.url)
+            viewModel.refresh()
+        } catch {
+            importErrorMessage = error.localizedDescription
+        }
+    }
+
+    private var importingOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.35).ignoresSafeArea()
+            VStack(spacing: 12) {
+                ProgressView()
+                    .controlSize(.large)
+                    .tint(.white)
+                Text("読み込み中…")
+                    .font(AppTypography.caption)
+                    .foregroundStyle(.white)
+            }
+            .padding(24)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color.black.opacity(0.6))
+            )
         }
     }
 
@@ -240,7 +327,7 @@ struct SongsView: View {
             Text("まだ練習音源がありません。")
                 .font(.system(.body, design: .rounded).weight(.semibold))
                 .foregroundStyle(AppColors.textPrimary)
-            Text("右上の + から Files またはマイク録音で追加できます。")
+            Text("右上の + から Files・動画・マイク録音で追加できます。")
                 .font(AppTypography.caption)
                 .foregroundStyle(AppColors.textMuted)
         }

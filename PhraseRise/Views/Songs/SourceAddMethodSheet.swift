@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SourceAddMethodSheet: View {
     let onPickFiles: () -> Void
+    let onPickPhotoLibraryVideo: () -> Void
     let onPickMicRecording: () -> Void
 
     var body: some View {
@@ -16,7 +17,7 @@ struct SourceAddMethodSheet: View {
                     .font(.system(size: 28, weight: .bold, design: .rounded))
                     .foregroundStyle(AppColors.textPrimary)
 
-                Text("Files またはマイク録音から Song を作成します。")
+                Text("Files・フォトライブラリの動画・マイク録音から Song を作成します。")
                     .font(AppTypography.caption)
                     .foregroundStyle(AppColors.textSecondary)
             }
@@ -28,9 +29,17 @@ struct SourceAddMethodSheet: View {
                 methodRow(
                     icon: "folder",
                     title: "Files から追加",
-                    subtitle: "保存済みの音声ファイルを選ぶ",
+                    subtitle: "音声ファイルまたは動画ファイルを選ぶ",
                     tint: AppColors.accent,
                     action: onPickFiles
+                )
+                hairline
+                methodRow(
+                    icon: "film",
+                    title: "フォトライブラリの動画から追加",
+                    subtitle: "撮影した動画の音声を取り込む",
+                    tint: AppColors.accent,
+                    action: onPickPhotoLibraryVideo
                 )
                 hairline
                 methodRow(
