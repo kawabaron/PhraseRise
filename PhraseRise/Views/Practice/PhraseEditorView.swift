@@ -21,10 +21,6 @@ struct PhraseEditorView: View {
 
             Spacer(minLength: AppSpacing.medium)
 
-            rangeBlock
-
-            Spacer(minLength: AppSpacing.medium)
-
             detailsBlock
 
             Spacer(minLength: AppSpacing.medium)
@@ -104,35 +100,27 @@ struct PhraseEditorView: View {
 
     private var waveformBlock: some View {
         VStack(spacing: AppSpacing.small) {
-            Group {
-                if let videoURL = song.videoFileURL {
-                    VideoPlaybackDisplayView(
-                        videoURL: videoURL,
-                        durationSec: song.durationSec,
-                        selection: viewModel.startRatio ... viewModel.endRatio,
-                        headPosition: viewModel.isPlaying ? viewModel.playheadRatio : nil,
-                        onSelectionChange: { range in
-                            let lower = min(max(range.lowerBound, 0), 0.98)
-                            let upper = max(min(range.upperBound, 1), lower + 0.02)
-                            viewModel.startRatio = lower
-                            viewModel.endRatio = upper
-                        }
-                    )
-                } else {
-                    WaveformPlaceholderView(
-                        values: viewModel.waveformValues,
-                        selection: viewModel.startRatio ... viewModel.endRatio,
-                        headPosition: viewModel.isPlaying ? viewModel.playheadRatio : nil,
-                        onSelectionChange: { range in
-                            let lower = min(max(range.lowerBound, 0), 0.98)
-                            let upper = max(min(range.upperBound, 1), lower + 0.02)
-                            viewModel.startRatio = lower
-                            viewModel.endRatio = upper
-                        }
-                    )
-                }
+            if let videoURL = song.videoFileURL {
+                VideoPlaybackDisplayView(
+                    videoURL: videoURL,
+                    durationSec: song.durationSec,
+                    headPosition: viewModel.isPlaying ? viewModel.playheadRatio : nil
+                )
+                .frame(height: 140)
             }
-            .frame(height: 120)
+
+            WaveformPlaceholderView(
+                values: viewModel.waveformValues,
+                selection: viewModel.startRatio ... viewModel.endRatio,
+                headPosition: viewModel.isPlaying ? viewModel.playheadRatio : nil,
+                onSelectionChange: { range in
+                    let lower = min(max(range.lowerBound, 0), 0.98)
+                    let upper = max(min(range.upperBound, 1), lower + 0.02)
+                    viewModel.startRatio = lower
+                    viewModel.endRatio = upper
+                }
+            )
+            .frame(height: song.videoFileURL != nil ? 76 : 120)
 
             HStack {
                 ProgressPlayButton(
@@ -144,9 +132,15 @@ struct PhraseEditorView: View {
                     viewModel.togglePlayback()
                 }
 
-                Text(viewModel.isPlaying ? "A/B 区間を再生中" : "A/B 区間を再生")
-                    .font(AppTypography.caption)
-                    .foregroundStyle(AppColors.textSecondary)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(viewModel.isPlaying ? "A/B 区間を再生中" : "A/B 区間を再生")
+                        .font(AppTypography.caption)
+                        .foregroundStyle(AppColors.textSecondary)
+                    Text("A \(Formatting.duration(viewModel.startTimeSec))  B \(Formatting.duration(viewModel.endTimeSec))")
+                        .font(.system(.caption2, design: .rounded).weight(.semibold))
+                        .foregroundStyle(AppColors.textPrimary)
+                        .monospacedDigit()
+                }
 
                 Spacer()
             }
@@ -158,29 +152,6 @@ struct PhraseEditorView: View {
         guard viewModel.isPlaying else { return 0 }
         let span = max(viewModel.endRatio - viewModel.startRatio, 0.0001)
         return min(max((viewModel.playheadRatio - viewModel.startRatio) / span, 0), 1)
-    }
-
-    private var rangeBlock: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.medium) {
-            rangeEditor(
-                title: "A",
-                valueLabel: Formatting.duration(viewModel.startTimeSec),
-                value: $viewModel.startRatio,
-                range: 0 ... max(viewModel.endRatio - 0.02, 0.01),
-                onMinus: { viewModel.nudgeStart(by: -0.1) },
-                onPlus: { viewModel.nudgeStart(by: 0.1) }
-            )
-
-            rangeEditor(
-                title: "B",
-                valueLabel: Formatting.duration(viewModel.endTimeSec),
-                value: $viewModel.endRatio,
-                range: min(viewModel.startRatio + 0.02, 0.99) ... 1,
-                onMinus: { viewModel.nudgeEnd(by: -0.1) },
-                onPlus: { viewModel.nudgeEnd(by: 0.1) }
-            )
-        }
-        .padding(.horizontal, AppSpacing.screenHorizontal)
     }
 
     private var detailsBlock: some View {
@@ -235,50 +206,4 @@ struct PhraseEditorView: View {
         .buttonStyle(.plain)
     }
 
-    // MARK: - Helpers
-
-    private func rangeEditor(
-        title: String,
-        valueLabel: String,
-        value: Binding<Double>,
-        range: ClosedRange<Double>,
-        onMinus: @escaping () -> Void,
-        onPlus: @escaping () -> Void
-    ) -> some View {
-        HStack(spacing: 10) {
-            Text(title)
-                .font(.system(.headline, design: .rounded).weight(.bold))
-                .foregroundStyle(AppColors.accent)
-                .frame(width: 16, alignment: .leading)
-
-            Text(valueLabel)
-                .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                .foregroundStyle(AppColors.textPrimary)
-                .monospacedDigit()
-                .frame(width: 56, alignment: .leading)
-
-            Slider(value: value, in: range)
-                .tint(AppColors.accent)
-
-            Button(action: onMinus) {
-                Image(systemName: "minus")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(AppColors.textPrimary)
-                    .frame(width: 28, height: 28)
-                    .background(Circle().fill(AppColors.surface))
-                    .overlay(Circle().stroke(AppColors.border, lineWidth: 1))
-            }
-            .buttonStyle(.plain)
-
-            Button(action: onPlus) {
-                Image(systemName: "plus")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(AppColors.textPrimary)
-                    .frame(width: 28, height: 28)
-                    .background(Circle().fill(AppColors.surface))
-                    .overlay(Circle().stroke(AppColors.border, lineWidth: 1))
-            }
-            .buttonStyle(.plain)
-        }
-    }
 }

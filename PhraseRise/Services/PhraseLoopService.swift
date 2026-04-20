@@ -35,22 +35,6 @@ struct PhraseLoopService {
         return min(max(currentTimeSec / songDurationSec, 0), 1)
     }
 
-    func nudgeStart(range: ClosedRange<Double>, by seconds: Double, songDurationSec: Double) -> ClosedRange<Double> {
-        clampRange(
-            start: range.lowerBound + seconds,
-            end: range.upperBound,
-            songDurationSec: songDurationSec
-        )
-    }
-
-    func nudgeEnd(range: ClosedRange<Double>, by seconds: Double, songDurationSec: Double) -> ClosedRange<Double> {
-        clampRange(
-            start: range.lowerBound,
-            end: range.upperBound + seconds,
-            songDurationSec: songDurationSec
-        )
-    }
-
     func boundaryAction(
         currentTimeSec: Double,
         range: ClosedRange<Double>,

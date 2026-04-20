@@ -158,22 +158,6 @@ final class PracticePlayerViewModel {
         isLoopEnabled.toggle()
     }
 
-    func nudgeLoopStart(by deltaSec: Double) {
-        loopRange = phraseLoopService.nudgeStart(range: loopRange, by: deltaSec, songDurationSec: song.durationSec)
-        if currentTimeSec < loopRange.lowerBound {
-            currentTimeSec = loopRange.lowerBound
-            audioPlaybackService.setCursor(currentTimeSec)
-        }
-    }
-
-    func nudgeLoopEnd(by deltaSec: Double) {
-        loopRange = phraseLoopService.nudgeEnd(range: loopRange, by: deltaSec, songDurationSec: song.durationSec)
-        if currentTimeSec > loopRange.upperBound {
-            currentTimeSec = loopRange.upperBound
-            audioPlaybackService.setCursor(currentTimeSec)
-        }
-    }
-
     func togglePerformanceRecording() async {
         if isRecording {
             do {

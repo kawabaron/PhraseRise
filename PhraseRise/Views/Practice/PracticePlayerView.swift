@@ -138,31 +138,27 @@ struct PracticePlayerView: View {
 
     // MARK: - Waveform
 
-    @ViewBuilder
     private var waveformBlock: some View {
-        Group {
+        VStack(spacing: AppSpacing.small) {
             if let videoURL = song.videoFileURL {
                 VideoPlaybackDisplayView(
                     videoURL: videoURL,
                     durationSec: song.durationSec,
-                    selection: viewModel.selectionRatio,
-                    headPosition: viewModel.headRatio,
-                    onSelectionChange: { ratio in
-                        viewModel.setLoopRange(fromRatio: ratio)
-                    }
+                    headPosition: viewModel.headRatio
                 )
-            } else {
-                WaveformPlaceholderView(
-                    values: song.waveformOverview.isEmpty ? Array(repeating: 0.42, count: 52) : song.waveformOverview,
-                    selection: viewModel.selectionRatio,
-                    headPosition: viewModel.headRatio,
-                    onSelectionChange: { ratio in
-                        viewModel.setLoopRange(fromRatio: ratio)
-                    }
-                )
+                .frame(height: 140)
             }
+
+            WaveformPlaceholderView(
+                values: song.waveformOverview.isEmpty ? Array(repeating: 0.42, count: 52) : song.waveformOverview,
+                selection: viewModel.selectionRatio,
+                headPosition: viewModel.headRatio,
+                onSelectionChange: { ratio in
+                    viewModel.setLoopRange(fromRatio: ratio)
+                }
+            )
+            .frame(height: song.videoFileURL != nil ? 72 : 110)
         }
-        .frame(height: 110)
         .padding(.horizontal, AppSpacing.screenHorizontal)
     }
 
@@ -280,90 +276,43 @@ struct PracticePlayerView: View {
     // MARK: - Loop
 
     private var loopBlock: some View {
-        VStack(spacing: AppSpacing.small) {
-            HStack(spacing: AppSpacing.xSmall) {
-                Button {
-                    viewModel.toggleLoop()
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "repeat")
-                            .font(.system(size: 12, weight: .semibold))
-                        Text("ループ")
-                            .font(AppTypography.caption)
-                    }
-                    .foregroundStyle(viewModel.isLoopEnabled ? AppColors.accent : AppColors.textSecondary)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(
-                        Capsule().fill(
-                            viewModel.isLoopEnabled
-                                ? AppColors.accent.opacity(0.15)
-                                : AppColors.surface.opacity(0.7)
-                        )
-                    )
-                    .overlay(
-                        Capsule().stroke(
-                            viewModel.isLoopEnabled ? AppColors.accent.opacity(0.4) : AppColors.border,
-                            lineWidth: 1
-                        )
-                    )
+        HStack(spacing: AppSpacing.small) {
+            Button {
+                viewModel.toggleLoop()
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "repeat")
+                        .font(.system(size: 12, weight: .semibold))
+                    Text("ループ")
+                        .font(AppTypography.caption)
                 }
-                .buttonStyle(.plain)
-
-                Spacer()
-            }
-
-            HStack(spacing: AppSpacing.medium) {
-                loopAdjuster(
-                    title: "開始",
-                    value: Formatting.duration(viewModel.loopRange.lowerBound),
-                    onMinus: { viewModel.nudgeLoopStart(by: -0.1) },
-                    onPlus: { viewModel.nudgeLoopStart(by: 0.1) }
+                .foregroundStyle(viewModel.isLoopEnabled ? AppColors.accent : AppColors.textSecondary)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(
+                    Capsule().fill(
+                        viewModel.isLoopEnabled
+                            ? AppColors.accent.opacity(0.15)
+                            : AppColors.surface.opacity(0.7)
+                    )
                 )
-
-                loopAdjuster(
-                    title: "終了",
-                    value: Formatting.duration(viewModel.loopRange.upperBound),
-                    onMinus: { viewModel.nudgeLoopEnd(by: -0.1) },
-                    onPlus: { viewModel.nudgeLoopEnd(by: 0.1) }
+                .overlay(
+                    Capsule().stroke(
+                        viewModel.isLoopEnabled ? AppColors.accent.opacity(0.4) : AppColors.border,
+                        lineWidth: 1
+                    )
                 )
             }
-        }
-        .padding(.horizontal, AppSpacing.screenHorizontal)
-    }
+            .buttonStyle(.plain)
 
-    private func loopAdjuster(
-        title: String,
-        value: String,
-        onMinus: @escaping () -> Void,
-        onPlus: @escaping () -> Void
-    ) -> some View {
-        HStack(spacing: 6) {
-            Text("\(title) \(value)")
+            Spacer()
+
+            Text("A \(Formatting.duration(viewModel.loopRange.lowerBound))  B \(Formatting.duration(viewModel.loopRange.upperBound))")
                 .font(.system(.caption, design: .rounded).weight(.semibold))
                 .foregroundStyle(AppColors.textPrimary)
                 .monospacedDigit()
-
-            Button(action: onMinus) {
-                Image(systemName: "minus")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(AppColors.textPrimary)
-                    .frame(width: 26, height: 26)
-                    .background(Circle().fill(AppColors.surface))
-                    .overlay(Circle().stroke(AppColors.border, lineWidth: 1))
-            }
-            .buttonStyle(.plain)
-
-            Button(action: onPlus) {
-                Image(systemName: "plus")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(AppColors.textPrimary)
-                    .frame(width: 26, height: 26)
-                    .background(Circle().fill(AppColors.surface))
-                    .overlay(Circle().stroke(AppColors.border, lineWidth: 1))
-            }
-            .buttonStyle(.plain)
         }
+        .padding(.horizontal, AppSpacing.screenHorizontal)
     }
 
     // MARK: - Action row

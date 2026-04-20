@@ -59,18 +59,6 @@ final class PhraseEditorViewModel {
         max(0, endTimeSec - startTimeSec)
     }
 
-    func nudgeStart(by seconds: Double) {
-        guard song.durationSec > 0 else { return }
-        let next = startTimeSec + seconds
-        startRatio = min(max(next / song.durationSec, 0), max(endRatio - 0.02, 0))
-    }
-
-    func nudgeEnd(by seconds: Double) {
-        guard song.durationSec > 0 else { return }
-        let next = endTimeSec + seconds
-        endRatio = max(min(next / song.durationSec, 1), min(startRatio + 0.02, 1))
-    }
-
     func togglePlayback() {
         if isPlaying {
             stopPlayback()
