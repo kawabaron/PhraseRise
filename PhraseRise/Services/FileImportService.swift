@@ -1,5 +1,6 @@
 import AVFoundation
 import Foundation
+import UIKit
 import UniformTypeIdentifiers
 
 @MainActor
@@ -41,10 +42,25 @@ final class FileImportService {
         let songsDirectory = try AudioFileStorage.songsDirectory(fileManager: fileManager)
         let title = sourceURL.deletingPathExtension().lastPathComponent
         let destinationURL: URL
+        var videoDestinationURL: URL?
+        var thumbnailDestinationURL: URL?
 
         if Self.isVideo(url: sourceURL) {
             destinationURL = AudioFileStorage.uniqueAudioFileURL(in: songsDirectory, fileExtension: "m4a")
-            try await extractAudio(from: sourceURL, to: destinationURL)
+
+            let videosDirectory = try AudioFileStorage.videosDirectory(fileManager: fileManager)
+            let videoExtension = sourceURL.pathExtension.isEmpty ? "mov" : sourceURL.pathExtension
+            let videoURL = AudioFileStorage.uniqueAudioFileURL(in: videosDirectory, fileExtension: videoExtension)
+            try fileManager.copyItem(at: sourceURL, to: videoURL)
+            videoDestinationURL = videoURL
+
+            try await extractAudio(from: videoURL, to: destinationURL)
+
+            let thumbnailsDirectory = try AudioFileStorage.thumbnailsDirectory(fileManager: fileManager)
+            let thumbnailURL = AudioFileStorage.uniqueAudioFileURL(in: thumbnailsDirectory, fileExtension: "jpg")
+            if (try? await generateThumbnail(from: videoURL, to: thumbnailURL)) != nil {
+                thumbnailDestinationURL = thumbnailURL
+            }
         } else {
             let fileExtension = sourceURL.pathExtension.isEmpty ? "m4a" : sourceURL.pathExtension
             destinationURL = AudioFileStorage.uniqueAudioFileURL(in: songsDirectory, fileExtension: fileExtension)
@@ -58,6 +74,8 @@ final class FileImportService {
         return songRepository.create(
             title: title,
             localFileURL: destinationURL,
+            videoFileURL: videoDestinationURL,
+            thumbnailFileURL: thumbnailDestinationURL,
             durationSec: durationSec.isFinite ? durationSec : 0,
             sourceType: .imported,
             waveformOverview: waveform
@@ -105,6 +123,34 @@ final class FileImportService {
         default:
             throw ImportError.exportFailed(nil)
         }
+    }
+
+    private func generateThumbnail(from videoURL: URL, to destinationURL: URL) async throws {
+        let asset = AVURLAsset(url: videoURL)
+        let generator = AVAssetImageGenerator(asset: asset)
+        generator.appliesPreferredTrackTransform = true
+        generator.maximumSize = CGSize(width: 480, height: 480)
+
+        let duration = try await asset.load(.duration)
+        let seconds = CMTimeGetSeconds(duration)
+        let targetSeconds = seconds.isFinite && seconds > 0 ? min(1.0, seconds / 2) : 0
+        let time = CMTime(seconds: targetSeconds, preferredTimescale: 600)
+
+        let cgImage: CGImage = try await withCheckedThrowingContinuation { continuation in
+            generator.generateCGImagesAsynchronously(forTimes: [NSValue(time: time)]) { _, image, _, _, error in
+                if let image {
+                    continuation.resume(returning: image)
+                } else {
+                    continuation.resume(throwing: error ?? NSError(domain: "FileImportService", code: -1))
+                }
+            }
+        }
+
+        let uiImage = UIImage(cgImage: cgImage)
+        guard let data = uiImage.jpegData(compressionQuality: 0.8) else {
+            throw NSError(domain: "FileImportService", code: -2)
+        }
+        try data.write(to: destinationURL)
     }
 
     private func makePlaceholderWaveform(for fileURL: URL) -> [Double] {

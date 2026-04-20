@@ -14,6 +14,14 @@ enum AudioFileStorage {
         try ensureDirectory(named: "PhraseRise/Songs", fileManager: fileManager)
     }
 
+    static func videosDirectory(fileManager: FileManager = .default) throws -> URL {
+        try ensureDirectory(named: "PhraseRise/Videos", fileManager: fileManager)
+    }
+
+    static func thumbnailsDirectory(fileManager: FileManager = .default) throws -> URL {
+        try ensureDirectory(named: "PhraseRise/Thumbnails", fileManager: fileManager)
+    }
+
     static func draftsDirectory(fileManager: FileManager = .default) throws -> URL {
         try ensureDirectory(named: "PhraseRise/SourceDrafts", fileManager: fileManager)
     }

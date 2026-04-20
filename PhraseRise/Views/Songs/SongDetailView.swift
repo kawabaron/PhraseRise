@@ -107,10 +107,20 @@ struct SongDetailView: View {
                 }
             }
 
-            WaveformPlaceholderView(
-                values: viewModel.waveformValues,
-                headPosition: viewModel.isSongPlaying ? viewModel.songPlaybackRatio : nil
-            )
+            Group {
+                if let videoURL = viewModel.song.videoFileURL {
+                    VideoPlaybackDisplayView(
+                        videoURL: videoURL,
+                        durationSec: viewModel.song.durationSec,
+                        headPosition: viewModel.isSongPlaying ? viewModel.songPlaybackRatio : nil
+                    )
+                } else {
+                    WaveformPlaceholderView(
+                        values: viewModel.waveformValues,
+                        headPosition: viewModel.isSongPlaying ? viewModel.songPlaybackRatio : nil
+                    )
+                }
+            }
             .frame(height: 120)
             .padding(.top, AppSpacing.small)
 

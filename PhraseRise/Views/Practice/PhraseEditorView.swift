@@ -3,10 +3,12 @@ import SwiftUI
 struct PhraseEditorView: View {
     @Environment(\.dismiss) private var dismiss
     let dependencies: AppDependencies
+    private let song: Song
     @State private var viewModel: PhraseEditorViewModel
 
     init(song: Song, phrase: Phrase? = nil, dependencies: AppDependencies) {
         self.dependencies = dependencies
+        self.song = song
         _viewModel = State(initialValue: PhraseEditorViewModel(song: song, phrase: phrase, dependencies: dependencies))
     }
 
@@ -102,17 +104,34 @@ struct PhraseEditorView: View {
 
     private var waveformBlock: some View {
         VStack(spacing: AppSpacing.small) {
-            WaveformPlaceholderView(
-                values: viewModel.waveformValues,
-                selection: viewModel.startRatio ... viewModel.endRatio,
-                headPosition: viewModel.isPlaying ? viewModel.playheadRatio : nil,
-                onSelectionChange: { range in
-                    let lower = min(max(range.lowerBound, 0), 0.98)
-                    let upper = max(min(range.upperBound, 1), lower + 0.02)
-                    viewModel.startRatio = lower
-                    viewModel.endRatio = upper
+            Group {
+                if let videoURL = song.videoFileURL {
+                    VideoPlaybackDisplayView(
+                        videoURL: videoURL,
+                        durationSec: song.durationSec,
+                        selection: viewModel.startRatio ... viewModel.endRatio,
+                        headPosition: viewModel.isPlaying ? viewModel.playheadRatio : nil,
+                        onSelectionChange: { range in
+                            let lower = min(max(range.lowerBound, 0), 0.98)
+                            let upper = max(min(range.upperBound, 1), lower + 0.02)
+                            viewModel.startRatio = lower
+                            viewModel.endRatio = upper
+                        }
+                    )
+                } else {
+                    WaveformPlaceholderView(
+                        values: viewModel.waveformValues,
+                        selection: viewModel.startRatio ... viewModel.endRatio,
+                        headPosition: viewModel.isPlaying ? viewModel.playheadRatio : nil,
+                        onSelectionChange: { range in
+                            let lower = min(max(range.lowerBound, 0), 0.98)
+                            let upper = max(min(range.upperBound, 1), lower + 0.02)
+                            viewModel.startRatio = lower
+                            viewModel.endRatio = upper
+                        }
+                    )
                 }
-            )
+            }
             .frame(height: 120)
 
             HStack {

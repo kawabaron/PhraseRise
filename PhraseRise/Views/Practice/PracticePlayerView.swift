@@ -138,15 +138,30 @@ struct PracticePlayerView: View {
 
     // MARK: - Waveform
 
+    @ViewBuilder
     private var waveformBlock: some View {
-        WaveformPlaceholderView(
-            values: song.waveformOverview.isEmpty ? Array(repeating: 0.42, count: 52) : song.waveformOverview,
-            selection: viewModel.selectionRatio,
-            headPosition: viewModel.headRatio,
-            onSelectionChange: { ratio in
-                viewModel.setLoopRange(fromRatio: ratio)
+        Group {
+            if let videoURL = song.videoFileURL {
+                VideoPlaybackDisplayView(
+                    videoURL: videoURL,
+                    durationSec: song.durationSec,
+                    selection: viewModel.selectionRatio,
+                    headPosition: viewModel.headRatio,
+                    onSelectionChange: { ratio in
+                        viewModel.setLoopRange(fromRatio: ratio)
+                    }
+                )
+            } else {
+                WaveformPlaceholderView(
+                    values: song.waveformOverview.isEmpty ? Array(repeating: 0.42, count: 52) : song.waveformOverview,
+                    selection: viewModel.selectionRatio,
+                    headPosition: viewModel.headRatio,
+                    onSelectionChange: { ratio in
+                        viewModel.setLoopRange(fromRatio: ratio)
+                    }
+                )
             }
-        )
+        }
         .frame(height: 110)
         .padding(.horizontal, AppSpacing.screenHorizontal)
     }

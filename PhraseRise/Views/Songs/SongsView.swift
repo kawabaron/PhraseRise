@@ -272,9 +272,7 @@ struct SongsView: View {
 
     private func songRow(_ song: Song) -> some View {
         HStack(spacing: 14) {
-            Circle()
-                .fill(song.sourceType == .micRecorded ? AppColors.recording : AppColors.accent)
-                .frame(width: 8, height: 8)
+            songLeadingIcon(song)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(song.title)
@@ -297,6 +295,36 @@ struct SongsView: View {
         .padding(.horizontal, AppSpacing.screenHorizontal)
         .padding(.vertical, 14)
         .contentShape(Rectangle())
+    }
+
+    @ViewBuilder
+    private func songLeadingIcon(_ song: Song) -> some View {
+        if let thumbnailURL = song.thumbnailFileURL,
+           let uiImage = UIImage(contentsOfFile: thumbnailURL.path) {
+            ZStack(alignment: .bottomTrailing) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 44, height: 44)
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .stroke(AppColors.border, lineWidth: 0.5)
+                    )
+
+                Image(systemName: "play.fill")
+                    .font(.system(size: 7, weight: .bold))
+                    .foregroundStyle(.white)
+                    .padding(3)
+                    .background(Circle().fill(Color.black.opacity(0.55)))
+                    .padding(2)
+            }
+        } else {
+            Circle()
+                .fill(song.sourceType == .micRecorded ? AppColors.recording : AppColors.accent)
+                .frame(width: 8, height: 8)
+                .frame(width: 44, height: 44)
+        }
     }
 
     private func subtitleLine(for song: Song) -> String {

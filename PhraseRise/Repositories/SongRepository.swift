@@ -26,6 +26,8 @@ final class SongRepository {
         title: String,
         artistName: String? = nil,
         localFileURL: URL,
+        videoFileURL: URL? = nil,
+        thumbnailFileURL: URL? = nil,
         durationSec: Double,
         sourceType: SongSourceType,
         waveformOverview: [Double] = []
@@ -34,6 +36,8 @@ final class SongRepository {
             title: title,
             artistName: artistName,
             localFileURL: localFileURL,
+            videoFileURL: videoFileURL,
+            thumbnailFileURL: thumbnailFileURL,
             durationSec: durationSec,
             sourceType: sourceType,
             waveformOverview: waveformOverview

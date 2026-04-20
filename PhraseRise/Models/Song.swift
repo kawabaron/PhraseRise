@@ -7,6 +7,8 @@ final class Song {
     var title: String
     var artistName: String?
     var localFileURL: URL
+    var videoFileURL: URL?
+    var thumbnailFileURL: URL?
     var durationSec: Double
     var sourceTypeRaw: String
     var waveformOverviewJSON: String
@@ -18,6 +20,8 @@ final class Song {
         title: String,
         artistName: String? = nil,
         localFileURL: URL,
+        videoFileURL: URL? = nil,
+        thumbnailFileURL: URL? = nil,
         durationSec: Double,
         sourceType: SongSourceType,
         waveformOverview: [Double] = [],
@@ -28,6 +32,8 @@ final class Song {
         self.title = title
         self.artistName = artistName
         self.localFileURL = localFileURL
+        self.videoFileURL = videoFileURL
+        self.thumbnailFileURL = thumbnailFileURL
         self.durationSec = durationSec
         self.sourceTypeRaw = sourceType.rawValue
         self.waveformOverviewJSON = Self.encodeWaveform(waveformOverview)
@@ -38,6 +44,10 @@ final class Song {
     var sourceType: SongSourceType {
         get { SongSourceType(rawValue: sourceTypeRaw) ?? .imported }
         set { sourceTypeRaw = newValue.rawValue }
+    }
+
+    var hasVideo: Bool {
+        videoFileURL != nil
     }
 
     var waveformOverview: [Double] {
