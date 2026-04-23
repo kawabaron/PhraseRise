@@ -30,6 +30,7 @@ final class PracticePlayerViewModel {
     var recordingInputLevel: Double = 0
     var latestRecordingSummary: String
     var hasLatestRecording: Bool
+    var recordingCount: Int
     var errorMessage: String?
     var shouldShowPaywall = false
 
@@ -47,8 +48,9 @@ final class PracticePlayerViewModel {
         let settings = dependencies.settingsRepository.loadOrCreate()
         isLoopEnabled = settings.defaultLoopEnabled
 
+        latestRecordingSummary = "No saved takes yet"
         hasLatestRecording = false
-        latestRecordingSummary = "演奏録音はまだありません"
+        recordingCount = 0
         refreshLatestRecordingSummary()
     }
 
@@ -77,6 +79,7 @@ final class PracticePlayerViewModel {
     func handleAppear() {
         audioPlaybackService.setCursor(loopRange.lowerBound)
         currentTimeSec = loopRange.lowerBound
+        refreshLatestRecordingSummary()
         progressTicker.start()
     }
 
@@ -145,6 +148,7 @@ final class PracticePlayerViewModel {
             end: newEnd,
             songDurationSec: song.durationSec
         )
+
         if currentTimeSec < loopRange.lowerBound {
             currentTimeSec = loopRange.lowerBound
             audioPlaybackService.setCursor(currentTimeSec)
@@ -232,12 +236,14 @@ final class PracticePlayerViewModel {
     }
 
     private func refreshLatestRecordingSummary() {
-        let latestRecording = performanceRecordingRepository.fetch(phraseId: phrase.id).first
+        let recordings = performanceRecordingRepository.fetch(phraseId: phrase.id)
+        recordingCount = recordings.count
+        let latestRecording = recordings.first
         hasLatestRecording = latestRecording != nil
         if let latestRecording {
             latestRecordingSummary = Formatting.date(latestRecording.recordedAt)
         } else {
-            latestRecordingSummary = "演奏録音はまだありません"
+            latestRecordingSummary = "No saved takes yet"
         }
     }
 }

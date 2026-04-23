@@ -2,11 +2,12 @@ import SwiftUI
 
 struct FilledStudioButtonStyle: ButtonStyle {
     let tint: Color
+    var foreground: Color = Color.black
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(.headline, design: .rounded).weight(.semibold))
-            .foregroundStyle(Color.white)
+            .foregroundStyle(foreground)
             .padding(.horizontal, AppSpacing.medium)
             .padding(.vertical, 14)
             .frame(maxWidth: .infinity)

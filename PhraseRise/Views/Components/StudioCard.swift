@@ -16,25 +16,54 @@ struct StudioCard<Content: View>: View {
         HStack(spacing: 0) {
             if let emphasisColor {
                 Rectangle()
-                    .fill(emphasisColor)
-                    .frame(width: 3)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                emphasisColor.opacity(0.9),
+                                emphasisColor.opacity(0.35)
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .frame(width: 4)
             }
 
             content
-                .padding(AppSpacing.medium)
+                .padding(AppSpacing.cardPadding)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .background(cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: AppCorners.card, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: AppCorners.card, style: .continuous)
-                .stroke(AppColors.border, lineWidth: 1)
-        )
+        .clipShape(cardShape)
+        .overlay(cardShape.stroke(AppColors.borderStrong, lineWidth: 1))
         .shadow(color: AppColors.shadow, radius: 14, x: 0, y: 6)
     }
 
+    private var cardShape: RoundedRectangle {
+        RoundedRectangle(cornerRadius: AppCorners.card, style: .continuous)
+    }
+
     private var cardBackground: some View {
-        AppColors.cardGradient
+        cardShape
+            .fill(AppColors.cardGradient)
+            .overlay(alignment: .topLeading) {
+                RoundedRectangle(cornerRadius: AppCorners.card, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                (emphasisColor ?? AppColors.surfaceGlass).opacity(0.18),
+                                Color.clear
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+            }
+            .overlay {
+                cardShape
+                    .stroke(Color.white.opacity(0.03), lineWidth: 0.5)
+                    .padding(1)
+            }
     }
 }
 
@@ -52,6 +81,7 @@ struct StudioSectionHeader: View {
             Text(title)
                 .font(AppTypography.sectionTitle)
                 .foregroundStyle(AppColors.textPrimary)
+                .tracking(0.2)
             if let subtitle {
                 Text(subtitle)
                     .font(AppTypography.caption)

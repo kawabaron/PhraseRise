@@ -1,18 +1,21 @@
 import SwiftUI
 
 private enum AppTab: String, CaseIterable, Identifiable {
-    case songs
-    case stats
+    case today
+    case library
+    case progress
     case settings
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
-        case .songs:
-            return "Songs"
-        case .stats:
-            return "Stats"
+        case .today:
+            return "Today"
+        case .library:
+            return "Library"
+        case .progress:
+            return "Progress"
         case .settings:
             return "Settings"
         }
@@ -20,9 +23,11 @@ private enum AppTab: String, CaseIterable, Identifiable {
 
     var symbol: String {
         switch self {
-        case .songs:
+        case .today:
+            return "sparkles"
+        case .library:
             return "music.note.list"
-        case .stats:
+        case .progress:
             return "chart.line.uptrend.xyaxis"
         case .settings:
             return "gearshape"
@@ -32,25 +37,33 @@ private enum AppTab: String, CaseIterable, Identifiable {
 
 struct RootTabView: View {
     let dependencies: AppDependencies
-    @State private var selectedTab: AppTab = .songs
+    @State private var selectedTab: AppTab = .today
 
     var body: some View {
         TabView(selection: $selectedTab) {
             NavigationStack {
+                TodayView(dependencies: dependencies)
+            }
+            .tabItem {
+                Label(AppTab.today.title, systemImage: AppTab.today.symbol)
+            }
+            .tag(AppTab.today)
+
+            NavigationStack {
                 SongsView(dependencies: dependencies)
             }
             .tabItem {
-                Label(AppTab.songs.title, systemImage: AppTab.songs.symbol)
+                Label(AppTab.library.title, systemImage: AppTab.library.symbol)
             }
-            .tag(AppTab.songs)
+            .tag(AppTab.library)
 
             NavigationStack {
                 StatsView(dependencies: dependencies)
             }
             .tabItem {
-                Label(AppTab.stats.title, systemImage: AppTab.stats.symbol)
+                Label(AppTab.progress.title, systemImage: AppTab.progress.symbol)
             }
-            .tag(AppTab.stats)
+            .tag(AppTab.progress)
 
             NavigationStack {
                 SettingsView(dependencies: dependencies)
