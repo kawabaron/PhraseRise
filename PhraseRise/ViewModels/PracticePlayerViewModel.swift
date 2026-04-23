@@ -6,6 +6,7 @@ import Observation
 final class PracticePlayerViewModel {
     private let phrase: Phrase
     private let song: Song
+    private let phraseRepository: PhraseRepository
     private let audioPlaybackService: AudioPlaybackService
     private let performanceRecordingService: PerformanceRecordingService
     private let phraseLoopService: PhraseLoopService
@@ -31,12 +32,14 @@ final class PracticePlayerViewModel {
     var latestRecordingSummary: String
     var hasLatestRecording: Bool
     var recordingCount: Int
+    var phraseProgressLabel: String
     var errorMessage: String?
     var shouldShowPaywall = false
 
     init(phrase: Phrase, song: Song, dependencies: AppDependencies) {
         self.phrase = phrase
         self.song = song
+        phraseRepository = dependencies.phraseRepository
         audioPlaybackService = dependencies.audioPlaybackService
         performanceRecordingService = dependencies.performanceRecordingService
         phraseLoopService = dependencies.phraseLoopService
@@ -51,6 +54,8 @@ final class PracticePlayerViewModel {
         latestRecordingSummary = "No saved takes yet"
         hasLatestRecording = false
         recordingCount = 0
+        phraseProgressLabel = "Practice"
+        refreshPhraseProgressLabel()
         refreshLatestRecordingSummary()
     }
 
@@ -79,6 +84,7 @@ final class PracticePlayerViewModel {
     func handleAppear() {
         audioPlaybackService.setCursor(loopRange.lowerBound)
         currentTimeSec = loopRange.lowerBound
+        refreshPhraseProgressLabel()
         refreshLatestRecordingSummary()
         progressTicker.start()
     }
@@ -245,5 +251,27 @@ final class PracticePlayerViewModel {
         } else {
             latestRecordingSummary = "No saved takes yet"
         }
+    }
+
+    private func refreshPhraseProgressLabel() {
+        let phrases = phraseRepository.fetch(songId: song.id)
+            .sorted { lhs, rhs in
+                if lhs.startTimeSec == rhs.startTimeSec {
+                    return lhs.createdAt < rhs.createdAt
+                }
+                return lhs.startTimeSec < rhs.startTimeSec
+            }
+
+        guard !phrases.isEmpty else {
+            phraseProgressLabel = "Practice"
+            return
+        }
+
+        guard let index = phrases.firstIndex(where: { $0.id == phrase.id }) else {
+            phraseProgressLabel = "Practice"
+            return
+        }
+
+        phraseProgressLabel = "Phrase \(index + 1) of \(phrases.count)"
     }
 }

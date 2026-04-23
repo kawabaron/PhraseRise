@@ -18,17 +18,20 @@ struct PracticePlayerView: View {
     }
 
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(spacing: AppSpacing.large) {
-                topBar
-                heroSection
-                loopCanvasCard
-                playbackCard
-                takesCard
+        GeometryReader { geometry in
+            let layout = PracticeScreenLayout(
+                size: geometry.size,
+                safeAreaInsets: geometry.safeAreaInsets
+            )
+
+            VStack(spacing: layout.stackSpacing) {
+                compactHeader(layout: layout)
+                practiceConsole(layout: layout)
             }
-            .padding(.horizontal, AppSpacing.screenHorizontal)
-            .padding(.top, AppSpacing.medium)
-            .padding(.bottom, AppSpacing.xxLarge)
+            .padding(.horizontal, layout.horizontalPadding)
+            .padding(.top, geometry.safeAreaInsets.top + layout.topPadding)
+            .padding(.bottom, max(layout.bottomPadding, geometry.safeAreaInsets.bottom + 8))
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
@@ -72,283 +75,546 @@ struct PracticePlayerView: View {
         }
     }
 
-    private var topBar: some View {
-        HStack {
-            Button {
-                dismiss()
-            } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 22, weight: .semibold))
+    private func compactHeader(layout: PracticeScreenLayout) -> some View {
+        ZStack {
+            HStack {
+                headerButton(icon: "chevron.down", size: layout.headerButtonSize) {
+                    dismiss()
+                }
+
+                Spacer()
+
+                Color.clear
+                    .frame(width: layout.headerButtonSize, height: layout.headerButtonSize)
+            }
+
+            VStack(spacing: 4) {
+                Text(displaySongTitle)
+                    .font(layout.compact ? AppTypography.cardTitle : AppTypography.sectionTitle)
                     .foregroundStyle(AppColors.textPrimary)
-                    .frame(width: 54, height: 54)
-                    .background(
-                        Circle()
-                            .fill(AppColors.surfaceMuted.opacity(0.92))
-                    )
-                    .overlay(
-                        Circle()
-                            .stroke(AppColors.borderStrong, lineWidth: 1)
-                    )
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.78)
+
+                Text("\(phrase.name) | \(viewModel.phraseProgressLabel)")
+                    .font(AppTypography.captionStrong)
+                    .foregroundStyle(AppColors.accent)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+            .padding(.horizontal, layout.headerButtonSize + 18)
+        }
+    }
+
+    private func practiceConsole(layout: PracticeScreenLayout) -> some View {
+        VStack(alignment: .leading, spacing: layout.sectionSpacing) {
+            consoleHeader(layout: layout)
+            mediaStage(layout: layout)
+            transportRow(layout: layout)
+            loopStatusRow
+            tuningPanel(layout: layout)
+            inputMeterRow(layout: layout)
+            recorderRail(layout: layout)
+        }
+        .padding(layout.consolePadding)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .background(consoleBackground)
+        .overlay(consoleOverlay)
+        .shadow(color: AppColors.shadow.opacity(0.24), radius: 18, x: 0, y: 12)
+    }
+
+    private func consoleHeader(layout: PracticeScreenLayout) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                Text(phrase.name)
+                    .font(layout.compact ? Font.system(size: 24, weight: .bold, design: .rounded) : Font.system(size: 28, weight: .bold, design: .rounded))
+                    .foregroundStyle(AppColors.textPrimary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.78)
+
+                Spacer(minLength: 0)
+
+                capsuleBadge(
+                    label: viewModel.isRecording ? "Recording" : (viewModel.isLoopEnabled ? "Loop On" : "Loop Off"),
+                    tint: viewModel.isRecording ? AppColors.recording : AppColors.accent
+                )
+            }
+
+            Text("\(displayArtistName) | \(rangeLabel)")
+                .font(AppTypography.caption)
+                .foregroundStyle(AppColors.textSecondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        }
+    }
+
+    private func mediaStage(layout: PracticeScreenLayout) -> some View {
+        VStack(alignment: .leading, spacing: layout.elementSpacing) {
+            if let videoURL = song.videoFileURL {
+                VideoPlaybackDisplayView(
+                    videoURL: videoURL,
+                    durationSec: song.durationSec,
+                    headPosition: viewModel.headRatio
+                )
+                .frame(height: layout.videoHeight)
+                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            }
+
+            WaveformPlaceholderView(
+                values: waveformValues,
+                selection: viewModel.selectionRatio,
+                headPosition: viewModel.headRatio,
+                onSelectionChange: { ratio in
+                    viewModel.setLoopRange(fromRatio: ratio)
+                }
+            )
+            .frame(height: layout.waveformHeight)
+
+            HStack {
+                waveformTimeLabel(Formatting.duration(viewModel.loopRange.lowerBound))
+                Spacer()
+                waveformTimeLabel(Formatting.duration(viewModel.currentTimeSec))
+                Spacer()
+                waveformTimeLabel(Formatting.duration(viewModel.loopRange.upperBound))
+            }
+
+            HStack(spacing: 10) {
+                timelineMetric(title: "A", value: Formatting.duration(viewModel.loopRange.lowerBound), tint: AppColors.accent)
+                timelineMetric(title: "B", value: Formatting.duration(viewModel.loopRange.upperBound), tint: AppColors.progress)
+                timelineMetric(title: "Span", value: viewModel.loopDurationLabel, tint: AppColors.success)
+            }
+        }
+    }
+
+    private func transportRow(layout: PracticeScreenLayout) -> some View {
+        HStack(spacing: layout.transportSpacing) {
+            transportButton(
+                icon: "gobackward.5",
+                size: layout.sideTransportButtonSize
+            ) {
+                viewModel.seek(by: -5)
+            }
+
+            Spacer(minLength: 0)
+
+            Button {
+                viewModel.togglePlayback()
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(AppColors.surface)
+                        .overlay(
+                            Circle()
+                                .stroke(AppColors.accent.opacity(0.95), lineWidth: 3)
+                        )
+
+                    Circle()
+                        .fill(AppColors.accent.opacity(0.16))
+                        .padding(8)
+
+                    Image(systemName: transportIconName)
+                        .font(.system(size: layout.playIconSize, weight: .bold))
+                        .foregroundStyle(AppColors.textPrimary)
+                        .offset(x: viewModel.isPlaying ? 0 : 2)
+                }
+                .frame(width: layout.playButtonSize, height: layout.playButtonSize)
+                .shadow(color: AppColors.accent.opacity(0.28), radius: 16, x: 0, y: 8)
             }
             .buttonStyle(.plain)
+
+            Spacer(minLength: 0)
+
+            transportButton(
+                icon: "goforward.5",
+                size: layout.sideTransportButtonSize
+            ) {
+                viewModel.seek(by: 5)
+            }
+        }
+    }
+
+    private var loopStatusRow: some View {
+        HStack(spacing: 10) {
+            Button {
+                viewModel.toggleLoop()
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "repeat")
+                        .font(.system(size: 13, weight: .semibold))
+                    Text(viewModel.isLoopEnabled ? "Loop A-B" : "Loop Off")
+                        .font(AppTypography.captionStrong)
+                }
+                .foregroundStyle(viewModel.isLoopEnabled ? AppColors.accent : AppColors.textSecondary)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 9)
+                .background(
+                    Capsule()
+                        .fill(viewModel.isLoopEnabled ? AppColors.accent.opacity(0.14) : AppColors.surfaceMuted)
+                )
+                .overlay(
+                    Capsule()
+                        .stroke(
+                            viewModel.isLoopEnabled ? AppColors.accent.opacity(0.30) : AppColors.border,
+                            lineWidth: 1
+                        )
+                )
+            }
+            .buttonStyle(.plain)
+
+            Text(viewModel.loopDurationLabel)
+                .font(AppTypography.captionStrong)
+                .foregroundStyle(AppColors.textSecondary)
+                .monospacedDigit()
 
             Spacer()
 
             if viewModel.isRecording {
-                statusPill(
-                    label: "REC \(Formatting.duration(viewModel.recordingElapsedSec))",
-                    tint: AppColors.recording
-                )
+                Text("REC \(Formatting.duration(viewModel.recordingElapsedSec))")
+                    .font(AppTypography.captionStrong)
+                    .foregroundStyle(AppColors.recording)
+                    .monospacedDigit()
             }
         }
     }
 
-    private var heroSection: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.small) {
-            Text(displaySongTitle)
-                .font(AppTypography.caption)
-                .foregroundStyle(AppColors.textSecondary)
-                .lineLimit(1)
+    private func tuningPanel(layout: PracticeScreenLayout) -> some View {
+        HStack(spacing: 0) {
+            tuningColumn(
+                title: "Speed",
+                value: "\(viewModel.speedPercent)%",
+                tint: AppColors.accent,
+                decreaseAction: {
+                    viewModel.setSpeedPercent(viewModel.speedPercent - PracticePlayerViewModel.speedPercentStep)
+                },
+                increaseAction: {
+                    viewModel.setSpeedPercent(viewModel.speedPercent + PracticePlayerViewModel.speedPercentStep)
+                }
+            )
 
-            Text(phrase.name)
-                .font(AppTypography.screenTitle)
+            Rectangle()
+                .fill(AppColors.border)
+                .frame(width: 1)
+                .padding(.vertical, 12)
+
+            tuningColumn(
+                title: "Pitch",
+                value: pitchLabel,
+                tint: AppColors.progress,
+                decreaseAction: {
+                    viewModel.setPitch(viewModel.pitchSemitones - 1)
+                },
+                increaseAction: {
+                    viewModel.setPitch(viewModel.pitchSemitones + 1)
+                }
+            )
+        }
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(AppColors.surfaceMuted)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .stroke(AppColors.border, lineWidth: 1)
+        )
+    }
+
+    private func inputMeterRow(layout: PracticeScreenLayout) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: "mic.fill")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(viewModel.isRecording ? AppColors.recording : AppColors.textMuted)
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("INPUT")
+                    .font(AppTypography.eyebrow)
+                    .tracking(1.4)
+                    .foregroundStyle(AppColors.textMuted)
+
+                InputLevelMeterView(level: viewModel.recordingInputLevel, isActive: viewModel.isRecording)
+                    .frame(height: layout.meterHeight)
+            }
+
+            Spacer(minLength: 0)
+
+            Text(inputMeterLabel)
+                .font(AppTypography.captionStrong)
+                .foregroundStyle(viewModel.isRecording ? AppColors.textPrimary : AppColors.textMuted)
+                .monospacedDigit()
+        }
+    }
+
+    private func recorderRail(layout: PracticeScreenLayout) -> some View {
+        HStack(alignment: .center) {
+            Button {
+                isPresentingRecordSheet = true
+            } label: {
+                recorderSideAction(
+                    icon: "square.and.pencil",
+                    title: "Log",
+                    detail: "Notes",
+                    tint: AppColors.accent,
+                    size: layout.footerButtonSize
+                )
+            }
+            .buttonStyle(.plain)
+
+            Spacer(minLength: layout.sectionSpacing)
+
+            Button {
+                Task {
+                    await viewModel.togglePerformanceRecording()
+                }
+            } label: {
+                VStack(spacing: 10) {
+                    ZStack {
+                        Circle()
+                            .fill((viewModel.isRecording ? AppColors.recording : AppColors.recording.opacity(0.86)).opacity(0.20))
+                            .frame(width: layout.recordHaloSize, height: layout.recordHaloSize)
+
+                        Circle()
+                            .fill(viewModel.isRecording ? AppColors.recording : AppColors.recording.opacity(0.88))
+                            .frame(width: layout.recordButtonSize, height: layout.recordButtonSize)
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.white.opacity(0.16), lineWidth: 1)
+                            )
+
+                        Circle()
+                            .stroke(Color.white.opacity(0.92), lineWidth: 4)
+                            .frame(width: layout.recordCoreSize, height: layout.recordCoreSize)
+
+                        if viewModel.isRecording {
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .fill(Color.white)
+                                .frame(width: layout.recordStopGlyphSize, height: layout.recordStopGlyphSize)
+                        } else {
+                            Circle()
+                                .fill(Color.white)
+                                .frame(width: layout.recordDotSize, height: layout.recordDotSize)
+                        }
+                    }
+
+                    Text(viewModel.isRecording ? "Tap to stop" : "Tap to record")
+                        .font(AppTypography.captionStrong)
+                        .foregroundStyle(AppColors.textSecondary)
+                }
+            }
+            .buttonStyle(.plain)
+
+            Spacer(minLength: layout.sectionSpacing)
+
+            NavigationLink {
+                RecordingListView(phrase: phrase, song: song, dependencies: dependencies)
+            } label: {
+                recorderSideAction(
+                    icon: "waveform.path",
+                    title: "Takes",
+                    detail: "\(viewModel.recordingCount)",
+                    tint: AppColors.progress,
+                    size: layout.footerButtonSize
+                )
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private func waveformTimeLabel(_ text: String) -> some View {
+        Text(text)
+            .font(AppTypography.caption)
+            .foregroundStyle(AppColors.textMuted)
+            .monospacedDigit()
+    }
+
+    private func timelineMetric(title: String, value: String, tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(AppTypography.eyebrow)
+                .tracking(1.2)
+                .foregroundStyle(AppColors.textMuted)
+
+            Text(value)
+                .font(AppTypography.captionStrong)
                 .foregroundStyle(AppColors.textPrimary)
-                .lineLimit(2)
-                .fixedSize(horizontal: false, vertical: true)
+                .monospacedDigit()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(tint.opacity(0.10))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(tint.opacity(0.24), lineWidth: 1)
+        )
+    }
 
-            HStack(spacing: 10) {
-                statusPill(
-                    label: phrase.status == .mastered ? "Mastered" : "Ready",
-                    tint: phrase.status == .mastered ? AppColors.success : AppColors.accent
-                )
-                statusPill(
-                    label: rangeLabel,
-                    tint: AppColors.surfaceInteractive,
-                    usesMutedStyle: true
-                )
+    private func tuningColumn(
+        title: String,
+        value: String,
+        tint: Color,
+        decreaseAction: @escaping () -> Void,
+        increaseAction: @escaping () -> Void
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title.uppercased())
+                .font(AppTypography.eyebrow)
+                .tracking(1.4)
+                .foregroundStyle(AppColors.textMuted)
+
+            Text(value)
+                .font(AppTypography.metric)
+                .foregroundStyle(AppColors.textPrimary)
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+
+            HStack(spacing: 16) {
+                tuningButton(symbol: "minus", tint: tint, action: decreaseAction)
+
+                Capsule()
+                    .fill(AppColors.borderStrong)
+                    .frame(width: 42, height: 4)
+
+                tuningButton(symbol: "plus", tint: tint, action: increaseAction)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
     }
 
-    private var loopCanvasCard: some View {
-        StudioCard(emphasisColor: AppColors.accent) {
-            VStack(alignment: .leading, spacing: AppSpacing.medium) {
-                cardHeader(
-                    title: "Loop Canvas",
-                    subtitle: "Adjust the phrase range directly on the waveform."
+    private func tuningButton(symbol: String, tint: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 14, weight: .bold))
+                .foregroundStyle(tint)
+                .frame(width: 28, height: 28)
+                .background(
+                    Circle()
+                        .fill(tint.opacity(0.12))
                 )
-
-                if let videoURL = song.videoFileURL {
-                    VideoPlaybackDisplayView(
-                        videoURL: videoURL,
-                        durationSec: song.durationSec,
-                        headPosition: viewModel.headRatio
-                    )
-                    .frame(height: 124)
-                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                }
-
-                WaveformPlaceholderView(
-                    values: song.waveformOverview.isEmpty ? Array(repeating: 0.42, count: 52) : song.waveformOverview,
-                    selection: viewModel.selectionRatio,
-                    headPosition: viewModel.headRatio,
-                    onSelectionChange: { ratio in
-                        viewModel.setLoopRange(fromRatio: ratio)
-                    }
-                )
-                .frame(height: song.videoFileURL != nil ? 84 : 108)
-
-                HStack(spacing: 10) {
-                    loopInfoPill(title: "A", value: Formatting.duration(viewModel.loopRange.lowerBound), tint: AppColors.accent)
-                    loopInfoPill(title: "B", value: Formatting.duration(viewModel.loopRange.upperBound), tint: AppColors.progress)
-                    loopInfoPill(title: "Span", value: viewModel.loopDurationLabel, tint: AppColors.success)
-                }
-            }
         }
+        .buttonStyle(.plain)
     }
 
-    private var playbackCard: some View {
-        StudioCard(emphasisColor: AppColors.progress) {
-            VStack(alignment: .leading, spacing: AppSpacing.medium) {
-                cardHeader(
-                    title: "Playback",
-                    subtitle: "Speed and pitch stay close to the transport."
+    private func transportButton(icon: String, size: CGFloat, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: size * 0.34, weight: .semibold))
+                .foregroundStyle(AppColors.textPrimary)
+                .frame(width: size, height: size)
+                .background(
+                    Circle()
+                        .fill(AppColors.surfaceMuted)
                 )
-
-                HStack(spacing: AppSpacing.large) {
-                    transportSideButton(icon: "gobackward.5") {
-                        viewModel.seek(by: -5)
-                    }
-
-                    Button {
-                        viewModel.togglePlayback()
-                    } label: {
-                        VStack(spacing: 8) {
-                            Image(systemName: transportIconName)
-                                .font(.system(size: 26, weight: .bold))
-                                .foregroundStyle(Color.black)
-                                .frame(width: 84, height: 84)
-                                .background(Circle().fill(AppColors.accent))
-                                .shadow(color: AppColors.accent.opacity(0.35), radius: 16, x: 0, y: 10)
-
-                            Text(viewModel.isPlaying ? "Pause" : "Play")
-                                .font(AppTypography.captionStrong)
-                                .foregroundStyle(AppColors.textSecondary)
-                        }
-                        .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.plain)
-
-                    transportSideButton(icon: "goforward.5") {
-                        viewModel.seek(by: 5)
-                    }
-                }
-
-                HStack(spacing: AppSpacing.medium) {
-                    adjustmentCard(
-                        title: "Speed",
-                        value: "\(viewModel.speedPercent)%",
-                        tint: AppColors.accent
-                    ) {
-                        Stepper(
-                            "",
-                            value: Binding(
-                                get: { viewModel.speedPercent },
-                                set: { viewModel.setSpeedPercent($0) }
-                            ),
-                            in: PracticePlayerViewModel.speedPercentRange,
-                            step: PracticePlayerViewModel.speedPercentStep
-                        )
-                        .labelsHidden()
-                        .tint(AppColors.accent)
-                    }
-
-                    adjustmentCard(
-                        title: "Pitch",
-                        value: pitchLabel,
-                        tint: AppColors.progress
-                    ) {
-                        Stepper(
-                            "",
-                            value: Binding(
-                                get: { viewModel.pitchSemitones },
-                                set: { viewModel.setPitch($0) }
-                            ),
-                            in: -12 ... 12,
-                            step: 1
-                        )
-                        .labelsHidden()
-                        .tint(AppColors.progress)
-                    }
-                }
-
-                Button {
-                    viewModel.toggleLoop()
-                } label: {
-                    HStack {
-                        HStack(spacing: 8) {
-                            Image(systemName: "repeat")
-                                .font(.system(size: 13, weight: .semibold))
-                            Text(viewModel.isLoopEnabled ? "Loop is active" : "Loop is paused")
-                                .font(AppTypography.bodyStrong)
-                        }
-                        .foregroundStyle(viewModel.isLoopEnabled ? AppColors.accent : AppColors.textSecondary)
-
-                        Spacer()
-
-                        Text("Tap to toggle")
-                            .font(AppTypography.caption)
-                            .foregroundStyle(AppColors.textMuted)
-                    }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 12)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(viewModel.isLoopEnabled ? AppColors.accent.opacity(0.12) : AppColors.surfaceMuted)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .stroke(
-                                viewModel.isLoopEnabled ? AppColors.accent.opacity(0.35) : AppColors.border,
-                                lineWidth: 1
-                            )
-                    )
-                }
-                .buttonStyle(.plain)
-            }
+                .overlay(
+                    Circle()
+                        .stroke(AppColors.border, lineWidth: 1)
+                )
         }
+        .buttonStyle(.plain)
     }
 
-    private var takesCard: some View {
-        StudioCard(emphasisColor: AppColors.recording) {
-            VStack(alignment: .leading, spacing: AppSpacing.medium) {
-                cardHeader(
-                    title: "Takes",
-                    subtitle: "Capture reps and jump into notes or comparison."
+    private func recorderSideAction(
+        icon: String,
+        title: String,
+        detail: String,
+        tint: Color,
+        size: CGFloat
+    ) -> some View {
+        VStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.system(size: size * 0.32, weight: .semibold))
+                .foregroundStyle(tint)
+                .frame(width: size, height: size)
+                .background(
+                    Circle()
+                        .fill(AppColors.surfaceMuted)
+                )
+                .overlay(
+                    Circle()
+                        .stroke(AppColors.border, lineWidth: 1)
                 )
 
-                HStack(spacing: AppSpacing.medium) {
-                    Button {
-                        Task {
-                            await viewModel.togglePerformanceRecording()
-                        }
-                    } label: {
-                        CircularRecordButton(isRecording: viewModel.isRecording)
-                    }
-                    .buttonStyle(.plain)
+            VStack(spacing: 2) {
+                Text(title)
+                    .font(AppTypography.captionStrong)
+                    .foregroundStyle(AppColors.textPrimary)
 
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(viewModel.isRecording ? "Recording in progress" : "Capture a new take")
-                            .font(AppTypography.cardTitle)
-                            .foregroundStyle(AppColors.textPrimary)
-
-                        Text(recordingSummaryText)
-                            .font(AppTypography.body)
-                            .foregroundStyle(AppColors.textSecondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-
-                if viewModel.isRecording {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Input level")
-                            .font(AppTypography.captionStrong)
-                            .foregroundStyle(AppColors.textMuted)
-
-                        InputLevelMeterView(level: viewModel.recordingInputLevel, isActive: true)
-                            .frame(height: 26)
-                    }
-                    .transition(.opacity)
-                }
-
-                HStack(spacing: AppSpacing.medium) {
-                    Button {
-                        isPresentingRecordSheet = true
-                    } label: {
-                        actionTile(
-                            icon: "square.and.pencil",
-                            title: "Log Practice",
-                            subtitle: "Save result and notes",
-                            tint: AppColors.accent
-                        )
-                    }
-                    .buttonStyle(.plain)
-
-                    NavigationLink {
-                        RecordingListView(phrase: phrase, song: song, dependencies: dependencies)
-                    } label: {
-                        actionTile(
-                            icon: "waveform.circle",
-                            title: "Open Takes",
-                            subtitle: "\(viewModel.recordingCount) saved",
-                            tint: AppColors.recording
-                        )
-                    }
-                    .buttonStyle(.plain)
-                }
+                Text(detail)
+                    .font(AppTypography.micro)
+                    .foregroundStyle(AppColors.textMuted)
+                    .lineLimit(1)
             }
         }
+        .frame(width: size + 14)
+    }
+
+    private func capsuleBadge(label: String, tint: Color) -> some View {
+        Text(label)
+            .font(AppTypography.captionStrong)
+            .foregroundStyle(tint)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
+            .background(
+                Capsule()
+                    .fill(tint.opacity(0.12))
+            )
+            .overlay(
+                Capsule()
+                    .stroke(tint.opacity(0.28), lineWidth: 1)
+            )
+    }
+
+    private func headerButton(icon: String, size: CGFloat, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: size * 0.34, weight: .semibold))
+                .foregroundStyle(AppColors.textPrimary)
+                .frame(width: size, height: size)
+                .background(
+                    Circle()
+                        .fill(AppColors.surfaceMuted.opacity(0.96))
+                )
+                .overlay(
+                    Circle()
+                        .stroke(AppColors.borderStrong, lineWidth: 1)
+                )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var consoleBackground: some View {
+        RoundedRectangle(cornerRadius: 30, style: .continuous)
+            .fill(
+                LinearGradient(
+                    colors: [
+                        AppColors.surfaceRaised.opacity(0.96),
+                        AppColors.surface.opacity(0.96),
+                        AppColors.surfaceMuted.opacity(0.98)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+    }
+
+    private var consoleOverlay: some View {
+        RoundedRectangle(cornerRadius: 30, style: .continuous)
+            .stroke(AppColors.borderStrong, lineWidth: 1)
+            .overlay(
+                RoundedRectangle(cornerRadius: 30, style: .continuous)
+                    .stroke(AppColors.accent.opacity(0.10), lineWidth: 1)
+                    .blur(radius: 10)
+            )
+    }
+
+    private var waveformValues: [Double] {
+        if song.waveformOverview.isEmpty {
+            return Array(repeating: 0.42, count: 52)
+        }
+        return song.waveformOverview
     }
 
     private var displaySongTitle: String {
@@ -358,11 +624,19 @@ struct PracticePlayerView: View {
             return "Imported source"
         }
 
-        if trimmed.count > 40 {
-            return String(trimmed.prefix(40)) + "..."
+        if trimmed.count > 32 {
+            return String(trimmed.prefix(32)) + "..."
         }
 
         return trimmed
+    }
+
+    private var displayArtistName: String {
+        let artist = song.artistName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if artist.isEmpty {
+            return "Practice session"
+        }
+        return artist
     }
 
     private var rangeLabel: String {
@@ -377,152 +651,114 @@ struct PracticePlayerView: View {
         return "\(value) st"
     }
 
+    private var inputMeterLabel: String {
+        guard viewModel.isRecording else {
+            return viewModel.hasLatestRecording ? "Live ready" : "Ready"
+        }
+
+        let clamped = min(max(viewModel.recordingInputLevel, 0), 1)
+        let dbValue = Int(round(-24 + clamped * 24))
+        return "\(dbValue) dB"
+    }
+
     private var transportIconName: String {
         viewModel.isPlaying ? "pause.fill" : "play.fill"
     }
+}
 
-    private var recordingSummaryText: String {
-        if viewModel.isRecording {
-            return "The meter below shows your live input while PhraseRise captures this take."
-        }
+private struct PracticeScreenLayout {
+    let size: CGSize
+    let safeAreaInsets: EdgeInsets
 
-        if viewModel.hasLatestRecording {
-            return "Latest take saved on \(viewModel.latestRecordingSummary)."
-        }
-
-        return "No take has been saved yet. Start recording when you are ready."
+    var availableHeight: CGFloat {
+        size.height - safeAreaInsets.top - safeAreaInsets.bottom
     }
 
-    private func cardHeader(title: String, subtitle: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title)
-                .font(AppTypography.cardTitle)
-                .foregroundStyle(AppColors.textPrimary)
-            Text(subtitle)
-                .font(AppTypography.caption)
-                .foregroundStyle(AppColors.textSecondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
+    var compact: Bool {
+        availableHeight < 740
     }
 
-    private func transportSideButton(icon: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Image(systemName: icon)
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(AppColors.textPrimary)
-                .frame(width: 52, height: 52)
-                .background(
-                    Circle()
-                        .fill(AppColors.surfaceMuted)
-                )
-                .overlay(
-                    Circle()
-                        .stroke(AppColors.border, lineWidth: 1)
-                )
-        }
-        .buttonStyle(.plain)
+    var horizontalPadding: CGFloat {
+        compact ? 16 : 20
     }
 
-    private func adjustmentCard<Content: View>(
-        title: String,
-        value: String,
-        tint: Color,
-        @ViewBuilder content: () -> Content
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(title.uppercased())
-                .font(AppTypography.eyebrow)
-                .tracking(1.4)
-                .foregroundStyle(AppColors.textMuted)
-
-            Text(value)
-                .font(AppTypography.heroMetric)
-                .foregroundStyle(AppColors.textPrimary)
-                .monospacedDigit()
-
-            content()
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(AppColors.surfaceMuted)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(tint.opacity(0.22), lineWidth: 1)
-        )
+    var topPadding: CGFloat {
+        compact ? 6 : 10
     }
 
-    private func statusPill(label: String, tint: Color, usesMutedStyle: Bool = false) -> some View {
-        Text(label)
-            .font(AppTypography.captionStrong)
-            .foregroundStyle(usesMutedStyle ? AppColors.textSecondary : tint)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(
-                Capsule()
-                    .fill(tint.opacity(usesMutedStyle ? 0.10 : 0.14))
-            )
-            .overlay(
-                Capsule()
-                    .stroke(tint.opacity(usesMutedStyle ? 0.18 : 0.30), lineWidth: 1)
-            )
+    var bottomPadding: CGFloat {
+        compact ? 14 : 18
     }
 
-    private func loopInfoPill(title: String, value: String, tint: Color) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Text(title)
-                .font(AppTypography.eyebrow)
-                .tracking(1.2)
-                .foregroundStyle(AppColors.textMuted)
-            Text(value)
-                .font(AppTypography.captionStrong)
-                .foregroundStyle(AppColors.textPrimary)
-                .monospacedDigit()
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(tint.opacity(0.12))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .stroke(tint.opacity(0.28), lineWidth: 1)
-        )
+    var stackSpacing: CGFloat {
+        compact ? 12 : 16
     }
 
-    private func actionTile(icon: String, title: String, subtitle: String, tint: Color) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Image(systemName: icon)
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(tint)
-                .frame(width: 40, height: 40)
-                .background(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(tint.opacity(0.12))
-                )
+    var sectionSpacing: CGFloat {
+        compact ? 14 : 18
+    }
 
-            Text(title)
-                .font(AppTypography.bodyStrong)
-                .foregroundStyle(AppColors.textPrimary)
+    var elementSpacing: CGFloat {
+        compact ? 8 : 10
+    }
 
-            Text(subtitle)
-                .font(AppTypography.caption)
-                .foregroundStyle(AppColors.textSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .frame(maxWidth: .infinity, minHeight: 112, alignment: .topLeading)
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: AppCorners.card, style: .continuous)
-                .fill(AppColors.surfaceMuted)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: AppCorners.card, style: .continuous)
-                .stroke(tint.opacity(0.24), lineWidth: 1)
-        )
+    var consolePadding: CGFloat {
+        compact ? 14 : 18
+    }
+
+    var headerButtonSize: CGFloat {
+        compact ? 42 : 46
+    }
+
+    var videoHeight: CGFloat {
+        min(max(availableHeight * 0.17, 104), compact ? 120 : 140)
+    }
+
+    var waveformHeight: CGFloat {
+        compact ? 76 : 88
+    }
+
+    var sideTransportButtonSize: CGFloat {
+        compact ? 54 : 58
+    }
+
+    var playButtonSize: CGFloat {
+        compact ? 88 : 98
+    }
+
+    var playIconSize: CGFloat {
+        compact ? 28 : 32
+    }
+
+    var transportSpacing: CGFloat {
+        compact ? 18 : 24
+    }
+
+    var meterHeight: CGFloat {
+        compact ? 16 : 18
+    }
+
+    var footerButtonSize: CGFloat {
+        compact ? 50 : 54
+    }
+
+    var recordHaloSize: CGFloat {
+        compact ? 92 : 102
+    }
+
+    var recordButtonSize: CGFloat {
+        compact ? 72 : 78
+    }
+
+    var recordCoreSize: CGFloat {
+        compact ? 30 : 34
+    }
+
+    var recordStopGlyphSize: CGFloat {
+        compact ? 18 : 20
+    }
+
+    var recordDotSize: CGFloat {
+        compact ? 14 : 16
     }
 }
