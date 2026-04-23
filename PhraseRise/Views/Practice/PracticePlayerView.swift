@@ -9,6 +9,7 @@ struct PracticePlayerView: View {
 
     @State private var viewModel: PracticePlayerViewModel
     @State private var isPresentingRecordSheet = false
+    @State private var isPresentingTakesSheet = false
 
     init(phrase: Phrase, song: Song, dependencies: AppDependencies) {
         self.phrase = phrase
@@ -24,14 +25,15 @@ struct PracticePlayerView: View {
                 safeAreaInsets: geometry.safeAreaInsets
             )
 
-            VStack(spacing: layout.stackSpacing) {
-                compactHeader(layout: layout)
+            VStack(spacing: layout.outerSpacing) {
+                topBar(layout: layout)
                 practiceConsole(layout: layout)
+                Spacer(minLength: 0)
             }
             .padding(.horizontal, layout.horizontalPadding)
             .padding(.top, geometry.safeAreaInsets.top + layout.topPadding)
             .padding(.bottom, max(layout.bottomPadding, geometry.safeAreaInsets.bottom + 8))
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .frame(width: geometry.size.width, height: geometry.size.height, alignment: .top)
         }
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
@@ -39,6 +41,13 @@ struct PracticePlayerView: View {
         .studioScreen()
         .sheet(isPresented: $isPresentingRecordSheet) {
             PracticeRecordSheet(phrase: phrase, dependencies: dependencies)
+        }
+        .sheet(isPresented: $isPresentingTakesSheet) {
+            NavigationStack {
+                RecordingListView(phrase: phrase, song: song, dependencies: dependencies)
+                    .navigationTitle("Saved Takes")
+                    .navigationBarTitleDisplayMode(.inline)
+            }
         }
         .sheet(
             isPresented: Binding(
@@ -75,7 +84,7 @@ struct PracticePlayerView: View {
         }
     }
 
-    private func compactHeader(layout: PracticeScreenLayout) -> some View {
+    private func topBar(layout: PracticeScreenLayout) -> some View {
         ZStack {
             HStack {
                 headerButton(icon: "chevron.down", size: layout.headerButtonSize) {
@@ -84,31 +93,41 @@ struct PracticePlayerView: View {
 
                 Spacer()
 
-                Color.clear
-                    .frame(width: layout.headerButtonSize, height: layout.headerButtonSize)
+                Menu {
+                    Button("Log Practice") {
+                        isPresentingRecordSheet = true
+                    }
+
+                    Button("Open Saved Takes") {
+                        isPresentingTakesSheet = true
+                    }
+                } label: {
+                    headerIcon(symbol: "ellipsis", size: layout.headerButtonSize)
+                }
             }
 
-            VStack(spacing: 4) {
+            VStack(spacing: 3) {
                 Text(displaySongTitle)
                     .font(layout.compact ? AppTypography.cardTitle : AppTypography.sectionTitle)
                     .foregroundStyle(AppColors.textPrimary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.78)
 
-                Text("\(phrase.name) | \(viewModel.phraseProgressLabel)")
+                Text(viewModel.phraseProgressLabel)
                     .font(AppTypography.captionStrong)
                     .foregroundStyle(AppColors.accent)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
-            .padding(.horizontal, layout.headerButtonSize + 18)
+            .padding(.horizontal, layout.headerButtonSize + 26)
         }
     }
 
     private func practiceConsole(layout: PracticeScreenLayout) -> some View {
         VStack(alignment: .leading, spacing: layout.sectionSpacing) {
-            consoleHeader(layout: layout)
-            mediaStage(layout: layout)
+            consoleTitleRow(layout: layout)
+            mediaPreview(layout: layout)
+            waveformStage(layout: layout)
             transportRow(layout: layout)
             loopStatusRow
             tuningPanel(layout: layout)
@@ -116,49 +135,87 @@ struct PracticePlayerView: View {
             recorderRail(layout: layout)
         }
         .padding(layout.consolePadding)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(consoleBackground)
         .overlay(consoleOverlay)
-        .shadow(color: AppColors.shadow.opacity(0.24), radius: 18, x: 0, y: 12)
+        .shadow(color: AppColors.shadow.opacity(0.18), radius: 18, x: 0, y: 10)
     }
 
-    private func consoleHeader(layout: PracticeScreenLayout) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .firstTextBaseline, spacing: 12) {
+    private func consoleTitleRow(layout: PracticeScreenLayout) -> some View {
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
                 Text(phrase.name)
-                    .font(layout.compact ? Font.system(size: 24, weight: .bold, design: .rounded) : Font.system(size: 28, weight: .bold, design: .rounded))
+                    .font(layout.compact ? Font.system(size: 21, weight: .bold, design: .rounded) : Font.system(size: 24, weight: .bold, design: .rounded))
                     .foregroundStyle(AppColors.textPrimary)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.78)
+                    .minimumScaleFactor(0.8)
 
-                Spacer(minLength: 0)
-
-                capsuleBadge(
-                    label: viewModel.isRecording ? "Recording" : (viewModel.isLoopEnabled ? "Loop On" : "Loop Off"),
-                    tint: viewModel.isRecording ? AppColors.recording : AppColors.accent
-                )
+                Text(displayArtistName)
+                    .font(AppTypography.caption)
+                    .foregroundStyle(AppColors.textSecondary)
+                    .lineLimit(1)
             }
 
-            Text("\(displayArtistName) | \(rangeLabel)")
-                .font(AppTypography.caption)
-                .foregroundStyle(AppColors.textSecondary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
+            Spacer(minLength: 0)
+
+            capsuleBadge(
+                label: viewModel.isRecording ? "Recording" : (viewModel.isLoopEnabled ? "Loop On" : "Loop Off"),
+                tint: viewModel.isRecording ? AppColors.recording : AppColors.accent
+            )
         }
     }
 
-    private func mediaStage(layout: PracticeScreenLayout) -> some View {
-        VStack(alignment: .leading, spacing: layout.elementSpacing) {
-            if let videoURL = song.videoFileURL {
-                VideoPlaybackDisplayView(
-                    videoURL: videoURL,
-                    durationSec: song.durationSec,
-                    headPosition: viewModel.headRatio
+    @ViewBuilder
+    private func mediaPreview(layout: PracticeScreenLayout) -> some View {
+        if let videoURL = song.videoFileURL {
+            VideoPlaybackDisplayView(
+                videoURL: videoURL,
+                durationSec: song.durationSec,
+                headPosition: viewModel.headRatio
+            )
+            .frame(height: layout.previewHeight)
+            .clipShape(RoundedRectangle(cornerRadius: layout.previewCornerRadius, style: .continuous))
+        } else if let thumbnailURL = song.thumbnailFileURL,
+                  let image = UIImage(contentsOfFile: thumbnailURL.path) {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+                .frame(height: layout.previewHeight)
+                .frame(maxWidth: .infinity)
+                .clipShape(RoundedRectangle(cornerRadius: layout.previewCornerRadius, style: .continuous))
+                .overlay(previewGradientOverlay)
+                .overlay(alignment: .bottomLeading) {
+                    previewMeta
+                        .padding(14)
+                }
+        } else {
+            RoundedRectangle(cornerRadius: layout.previewCornerRadius, style: .continuous)
+                .fill(AppColors.heroGradient)
+                .frame(height: layout.previewHeight)
+                .overlay(
+                    LinearGradient(
+                        colors: [
+                            Color.clear,
+                            Color.black.opacity(0.28)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
                 )
-                .frame(height: layout.videoHeight)
-                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-            }
+                .overlay(alignment: .bottomLeading) {
+                    previewMeta
+                        .padding(14)
+                }
+                .overlay(alignment: .topTrailing) {
+                    Image(systemName: song.sourceType == .micRecorded ? "mic.fill" : "waveform")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(AppColors.textPrimary.opacity(0.88))
+                        .padding(14)
+                }
+        }
+    }
 
+    private func waveformStage(layout: PracticeScreenLayout) -> some View {
+        VStack(spacing: layout.waveformSpacing) {
             WaveformPlaceholderView(
                 values: waveformValues,
                 selection: viewModel.selectionRatio,
@@ -176,21 +233,12 @@ struct PracticePlayerView: View {
                 Spacer()
                 waveformTimeLabel(Formatting.duration(viewModel.loopRange.upperBound))
             }
-
-            HStack(spacing: 10) {
-                timelineMetric(title: "A", value: Formatting.duration(viewModel.loopRange.lowerBound), tint: AppColors.accent)
-                timelineMetric(title: "B", value: Formatting.duration(viewModel.loopRange.upperBound), tint: AppColors.progress)
-                timelineMetric(title: "Span", value: viewModel.loopDurationLabel, tint: AppColors.success)
-            }
         }
     }
 
     private func transportRow(layout: PracticeScreenLayout) -> some View {
         HStack(spacing: layout.transportSpacing) {
-            transportButton(
-                icon: "gobackward.5",
-                size: layout.sideTransportButtonSize
-            ) {
+            transportButton(icon: "gobackward.5", size: layout.sideTransportButtonSize) {
                 viewModel.seek(by: -5)
             }
 
@@ -204,12 +252,12 @@ struct PracticePlayerView: View {
                         .fill(AppColors.surface)
                         .overlay(
                             Circle()
-                                .stroke(AppColors.accent.opacity(0.95), lineWidth: 3)
+                                .stroke(AppColors.accent.opacity(0.96), lineWidth: 3)
                         )
 
                     Circle()
-                        .fill(AppColors.accent.opacity(0.16))
-                        .padding(8)
+                        .fill(AppColors.accent.opacity(0.15))
+                        .padding(layout.compact ? 8 : 10)
 
                     Image(systemName: transportIconName)
                         .font(.system(size: layout.playIconSize, weight: .bold))
@@ -217,60 +265,61 @@ struct PracticePlayerView: View {
                         .offset(x: viewModel.isPlaying ? 0 : 2)
                 }
                 .frame(width: layout.playButtonSize, height: layout.playButtonSize)
-                .shadow(color: AppColors.accent.opacity(0.28), radius: 16, x: 0, y: 8)
+                .shadow(color: AppColors.accent.opacity(0.20), radius: 12, x: 0, y: 8)
             }
             .buttonStyle(.plain)
 
             Spacer(minLength: 0)
 
-            transportButton(
-                icon: "goforward.5",
-                size: layout.sideTransportButtonSize
-            ) {
+            transportButton(icon: "goforward.5", size: layout.sideTransportButtonSize) {
                 viewModel.seek(by: 5)
             }
         }
     }
 
     private var loopStatusRow: some View {
-        HStack(spacing: 10) {
-            Button {
-                viewModel.toggleLoop()
-            } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: "repeat")
-                        .font(.system(size: 13, weight: .semibold))
-                    Text(viewModel.isLoopEnabled ? "Loop A-B" : "Loop Off")
+        ZStack {
+            HStack {
+                Spacer()
+
+                if viewModel.isRecording {
+                    Text("REC \(Formatting.duration(viewModel.recordingElapsedSec))")
                         .font(AppTypography.captionStrong)
+                        .foregroundStyle(AppColors.recording)
+                        .monospacedDigit()
                 }
-                .foregroundStyle(viewModel.isLoopEnabled ? AppColors.accent : AppColors.textSecondary)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 9)
-                .background(
-                    Capsule()
-                        .fill(viewModel.isLoopEnabled ? AppColors.accent.opacity(0.14) : AppColors.surfaceMuted)
-                )
-                .overlay(
-                    Capsule()
-                        .stroke(
-                            viewModel.isLoopEnabled ? AppColors.accent.opacity(0.30) : AppColors.border,
-                            lineWidth: 1
-                        )
-                )
             }
-            .buttonStyle(.plain)
 
-            Text(viewModel.loopDurationLabel)
-                .font(AppTypography.captionStrong)
-                .foregroundStyle(AppColors.textSecondary)
-                .monospacedDigit()
+            HStack(spacing: 10) {
+                Button {
+                    viewModel.toggleLoop()
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "repeat")
+                            .font(.system(size: 12, weight: .semibold))
+                        Text(viewModel.isLoopEnabled ? "Loop A-B" : "Loop Off")
+                            .font(AppTypography.captionStrong)
+                    }
+                    .foregroundStyle(viewModel.isLoopEnabled ? AppColors.accent : AppColors.textSecondary)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .background(
+                        Capsule()
+                            .fill(viewModel.isLoopEnabled ? AppColors.accent.opacity(0.14) : AppColors.surfaceMuted)
+                    )
+                    .overlay(
+                        Capsule()
+                            .stroke(
+                                viewModel.isLoopEnabled ? AppColors.accent.opacity(0.28) : AppColors.border,
+                                lineWidth: 1
+                            )
+                    )
+                }
+                .buttonStyle(.plain)
 
-            Spacer()
-
-            if viewModel.isRecording {
-                Text("REC \(Formatting.duration(viewModel.recordingElapsedSec))")
+                Text(viewModel.loopDurationLabel)
                     .font(AppTypography.captionStrong)
-                    .foregroundStyle(AppColors.recording)
+                    .foregroundStyle(AppColors.textSecondary)
                     .monospacedDigit()
             }
         }
@@ -282,6 +331,7 @@ struct PracticePlayerView: View {
                 title: "Speed",
                 value: "\(viewModel.speedPercent)%",
                 tint: AppColors.accent,
+                layout: layout,
                 decreaseAction: {
                     viewModel.setSpeedPercent(viewModel.speedPercent - PracticePlayerViewModel.speedPercentStep)
                 },
@@ -293,12 +343,13 @@ struct PracticePlayerView: View {
             Rectangle()
                 .fill(AppColors.border)
                 .frame(width: 1)
-                .padding(.vertical, 12)
+                .padding(.vertical, 10)
 
             tuningColumn(
                 title: "Pitch",
                 value: pitchLabel,
                 tint: AppColors.progress,
+                layout: layout,
                 decreaseAction: {
                     viewModel.setPitch(viewModel.pitchSemitones - 1)
                 },
@@ -323,15 +374,13 @@ struct PracticePlayerView: View {
                 .font(.system(size: 12, weight: .bold))
                 .foregroundStyle(viewModel.isRecording ? AppColors.recording : AppColors.textMuted)
 
-            VStack(alignment: .leading, spacing: 8) {
-                Text("INPUT")
-                    .font(AppTypography.eyebrow)
-                    .tracking(1.4)
-                    .foregroundStyle(AppColors.textMuted)
+            Text("INPUT")
+                .font(AppTypography.eyebrow)
+                .tracking(1.4)
+                .foregroundStyle(AppColors.textMuted)
 
-                InputLevelMeterView(level: viewModel.recordingInputLevel, isActive: viewModel.isRecording)
-                    .frame(height: layout.meterHeight)
-            }
+            InputLevelMeterView(level: viewModel.recordingInputLevel, isActive: viewModel.isRecording)
+                .frame(height: layout.meterHeight)
 
             Spacer(minLength: 0)
 
@@ -350,7 +399,6 @@ struct PracticePlayerView: View {
                 recorderSideAction(
                     icon: "square.and.pencil",
                     title: "Log",
-                    detail: "Notes",
                     tint: AppColors.accent,
                     size: layout.footerButtonSize
                 )
@@ -364,26 +412,26 @@ struct PracticePlayerView: View {
                     await viewModel.togglePerformanceRecording()
                 }
             } label: {
-                VStack(spacing: 10) {
+                VStack(spacing: 8) {
                     ZStack {
                         Circle()
-                            .fill((viewModel.isRecording ? AppColors.recording : AppColors.recording.opacity(0.86)).opacity(0.20))
+                            .fill((viewModel.isRecording ? AppColors.recording : AppColors.recording.opacity(0.86)).opacity(0.18))
                             .frame(width: layout.recordHaloSize, height: layout.recordHaloSize)
 
                         Circle()
-                            .fill(viewModel.isRecording ? AppColors.recording : AppColors.recording.opacity(0.88))
+                            .fill(viewModel.isRecording ? AppColors.recording : AppColors.recording.opacity(0.90))
                             .frame(width: layout.recordButtonSize, height: layout.recordButtonSize)
                             .overlay(
                                 Circle()
-                                    .stroke(Color.white.opacity(0.16), lineWidth: 1)
+                                    .stroke(Color.white.opacity(0.14), lineWidth: 1)
                             )
 
                         Circle()
-                            .stroke(Color.white.opacity(0.92), lineWidth: 4)
+                            .stroke(Color.white.opacity(0.94), lineWidth: 4)
                             .frame(width: layout.recordCoreSize, height: layout.recordCoreSize)
 
                         if viewModel.isRecording {
-                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            RoundedRectangle(cornerRadius: 6, style: .continuous)
                                 .fill(Color.white)
                                 .frame(width: layout.recordStopGlyphSize, height: layout.recordStopGlyphSize)
                         } else {
@@ -394,7 +442,7 @@ struct PracticePlayerView: View {
                     }
 
                     Text(viewModel.isRecording ? "Tap to stop" : "Tap to record")
-                        .font(AppTypography.captionStrong)
+                        .font(AppTypography.micro)
                         .foregroundStyle(AppColors.textSecondary)
                 }
             }
@@ -402,13 +450,12 @@ struct PracticePlayerView: View {
 
             Spacer(minLength: layout.sectionSpacing)
 
-            NavigationLink {
-                RecordingListView(phrase: phrase, song: song, dependencies: dependencies)
+            Button {
+                isPresentingTakesSheet = true
             } label: {
                 recorderSideAction(
                     icon: "waveform.path",
                     title: "Takes",
-                    detail: "\(viewModel.recordingCount)",
                     tint: AppColors.progress,
                     size: layout.footerButtonSize
                 )
@@ -424,72 +471,48 @@ struct PracticePlayerView: View {
             .monospacedDigit()
     }
 
-    private func timelineMetric(title: String, value: String, tint: Color) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title)
-                .font(AppTypography.eyebrow)
-                .tracking(1.2)
-                .foregroundStyle(AppColors.textMuted)
-
-            Text(value)
-                .font(AppTypography.captionStrong)
-                .foregroundStyle(AppColors.textPrimary)
-                .monospacedDigit()
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(tint.opacity(0.10))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .stroke(tint.opacity(0.24), lineWidth: 1)
-        )
-    }
-
     private func tuningColumn(
         title: String,
         value: String,
         tint: Color,
+        layout: PracticeScreenLayout,
         decreaseAction: @escaping () -> Void,
         increaseAction: @escaping () -> Void
     ) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: layout.compact ? 10 : 12) {
             Text(title.uppercased())
                 .font(AppTypography.eyebrow)
                 .tracking(1.4)
                 .foregroundStyle(AppColors.textMuted)
 
             Text(value)
-                .font(AppTypography.metric)
+                .font(layout.compact ? Font.system(size: 26, weight: .bold, design: .rounded) : AppTypography.metric)
                 .foregroundStyle(AppColors.textPrimary)
                 .monospacedDigit()
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
 
-            HStack(spacing: 16) {
-                tuningButton(symbol: "minus", tint: tint, action: decreaseAction)
+            HStack(spacing: 14) {
+                tuningButton(symbol: "minus", tint: tint, size: layout.tuningButtonSize, action: decreaseAction)
 
                 Capsule()
                     .fill(AppColors.borderStrong)
-                    .frame(width: 42, height: 4)
+                    .frame(width: layout.tuningTrackWidth, height: 4)
 
-                tuningButton(symbol: "plus", tint: tint, action: increaseAction)
+                tuningButton(symbol: "plus", tint: tint, size: layout.tuningButtonSize, action: increaseAction)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 16)
-        .padding(.vertical, 14)
+        .padding(.vertical, layout.compact ? 12 : 14)
     }
 
-    private func tuningButton(symbol: String, tint: Color, action: @escaping () -> Void) -> some View {
+    private func tuningButton(symbol: String, tint: Color, size: CGFloat, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .font(.system(size: 14, weight: .bold))
+                .font(.system(size: size * 0.40, weight: .bold))
                 .foregroundStyle(tint)
-                .frame(width: 28, height: 28)
+                .frame(width: size, height: size)
                 .background(
                     Circle()
                         .fill(tint.opacity(0.12))
@@ -519,13 +542,12 @@ struct PracticePlayerView: View {
     private func recorderSideAction(
         icon: String,
         title: String,
-        detail: String,
         tint: Color,
         size: CGFloat
     ) -> some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 6) {
             Image(systemName: icon)
-                .font(.system(size: size * 0.32, weight: .semibold))
+                .font(.system(size: size * 0.34, weight: .semibold))
                 .foregroundStyle(tint)
                 .frame(width: size, height: size)
                 .background(
@@ -537,18 +559,12 @@ struct PracticePlayerView: View {
                         .stroke(AppColors.border, lineWidth: 1)
                 )
 
-            VStack(spacing: 2) {
-                Text(title)
-                    .font(AppTypography.captionStrong)
-                    .foregroundStyle(AppColors.textPrimary)
-
-                Text(detail)
-                    .font(AppTypography.micro)
-                    .foregroundStyle(AppColors.textMuted)
-                    .lineLimit(1)
-            }
+            Text(title)
+                .font(AppTypography.micro)
+                .foregroundStyle(AppColors.textPrimary)
+                .lineLimit(1)
         }
-        .frame(width: size + 14)
+        .frame(width: size + 10)
     }
 
     private func capsuleBadge(label: String, tint: Color) -> some View {
@@ -556,7 +572,7 @@ struct PracticePlayerView: View {
             .font(AppTypography.captionStrong)
             .foregroundStyle(tint)
             .padding(.horizontal, 12)
-            .padding(.vertical, 7)
+            .padding(.vertical, 6)
             .background(
                 Capsule()
                     .fill(tint.opacity(0.12))
@@ -569,20 +585,24 @@ struct PracticePlayerView: View {
 
     private func headerButton(icon: String, size: CGFloat, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Image(systemName: icon)
-                .font(.system(size: size * 0.34, weight: .semibold))
-                .foregroundStyle(AppColors.textPrimary)
-                .frame(width: size, height: size)
-                .background(
-                    Circle()
-                        .fill(AppColors.surfaceMuted.opacity(0.96))
-                )
-                .overlay(
-                    Circle()
-                        .stroke(AppColors.borderStrong, lineWidth: 1)
-                )
+            headerIcon(symbol: icon, size: size)
         }
         .buttonStyle(.plain)
+    }
+
+    private func headerIcon(symbol: String, size: CGFloat) -> some View {
+        Image(systemName: symbol)
+            .font(.system(size: size * 0.34, weight: .semibold))
+            .foregroundStyle(AppColors.textPrimary)
+            .frame(width: size, height: size)
+            .background(
+                Circle()
+                    .fill(AppColors.surfaceMuted.opacity(0.96))
+            )
+            .overlay(
+                Circle()
+                    .stroke(AppColors.borderStrong, lineWidth: 1)
+            )
     }
 
     private var consoleBackground: some View {
@@ -591,7 +611,7 @@ struct PracticePlayerView: View {
                 LinearGradient(
                     colors: [
                         AppColors.surfaceRaised.opacity(0.96),
-                        AppColors.surface.opacity(0.96),
+                        AppColors.surface.opacity(0.97),
                         AppColors.surfaceMuted.opacity(0.98)
                     ],
                     startPoint: .topLeading,
@@ -603,11 +623,33 @@ struct PracticePlayerView: View {
     private var consoleOverlay: some View {
         RoundedRectangle(cornerRadius: 30, style: .continuous)
             .stroke(AppColors.borderStrong, lineWidth: 1)
-            .overlay(
-                RoundedRectangle(cornerRadius: 30, style: .continuous)
-                    .stroke(AppColors.accent.opacity(0.10), lineWidth: 1)
-                    .blur(radius: 10)
-            )
+    }
+
+    private var previewGradientOverlay: some View {
+        LinearGradient(
+            colors: [
+                Color.clear,
+                Color.black.opacity(0.12),
+                Color.black.opacity(0.34)
+            ],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+
+    private var previewMeta: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(phrase.name)
+                .font(AppTypography.bodyStrong)
+                .foregroundStyle(AppColors.textPrimary)
+                .lineLimit(1)
+
+            Text(rangeLabel)
+                .font(AppTypography.caption)
+                .foregroundStyle(AppColors.textSecondary)
+                .monospacedDigit()
+        }
     }
 
     private var waveformValues: [Double] {
@@ -624,8 +666,8 @@ struct PracticePlayerView: View {
             return "Imported source"
         }
 
-        if trimmed.count > 32 {
-            return String(trimmed.prefix(32)) + "..."
+        if trimmed.count > 28 {
+            return String(trimmed.prefix(28)) + "..."
         }
 
         return trimmed
@@ -675,63 +717,75 @@ private struct PracticeScreenLayout {
     }
 
     var compact: Bool {
-        availableHeight < 740
+        availableHeight < 900
     }
 
     var horizontalPadding: CGFloat {
-        compact ? 16 : 20
+        compact ? 16 : 18
     }
 
     var topPadding: CGFloat {
-        compact ? 6 : 10
+        compact ? 2 : 6
     }
 
     var bottomPadding: CGFloat {
-        compact ? 14 : 18
-    }
-
-    var stackSpacing: CGFloat {
         compact ? 12 : 16
     }
 
-    var sectionSpacing: CGFloat {
-        compact ? 14 : 18
+    var outerSpacing: CGFloat {
+        compact ? 12 : 14
     }
 
-    var elementSpacing: CGFloat {
-        compact ? 8 : 10
+    var sectionSpacing: CGFloat {
+        compact ? 12 : 14
+    }
+
+    var waveformSpacing: CGFloat {
+        compact ? 7 : 8
     }
 
     var consolePadding: CGFloat {
-        compact ? 14 : 18
+        compact ? 14 : 16
     }
 
     var headerButtonSize: CGFloat {
-        compact ? 42 : 46
+        compact ? 40 : 44
     }
 
-    var videoHeight: CGFloat {
-        min(max(availableHeight * 0.17, 104), compact ? 120 : 140)
+    var previewHeight: CGFloat {
+        compact ? 92 : 108
+    }
+
+    var previewCornerRadius: CGFloat {
+        20
     }
 
     var waveformHeight: CGFloat {
-        compact ? 76 : 88
+        compact ? 68 : 76
     }
 
     var sideTransportButtonSize: CGFloat {
-        compact ? 54 : 58
+        compact ? 46 : 50
     }
 
     var playButtonSize: CGFloat {
-        compact ? 88 : 98
+        compact ? 82 : 90
     }
 
     var playIconSize: CGFloat {
-        compact ? 28 : 32
+        compact ? 28 : 30
     }
 
     var transportSpacing: CGFloat {
-        compact ? 18 : 24
+        compact ? 14 : 18
+    }
+
+    var tuningButtonSize: CGFloat {
+        compact ? 28 : 30
+    }
+
+    var tuningTrackWidth: CGFloat {
+        compact ? 48 : 54
     }
 
     var meterHeight: CGFloat {
@@ -739,23 +793,23 @@ private struct PracticeScreenLayout {
     }
 
     var footerButtonSize: CGFloat {
-        compact ? 50 : 54
+        compact ? 44 : 48
     }
 
     var recordHaloSize: CGFloat {
-        compact ? 92 : 102
+        compact ? 86 : 94
     }
 
     var recordButtonSize: CGFloat {
-        compact ? 72 : 78
+        compact ? 66 : 72
     }
 
     var recordCoreSize: CGFloat {
-        compact ? 30 : 34
+        compact ? 28 : 32
     }
 
     var recordStopGlyphSize: CGFloat {
-        compact ? 18 : 20
+        compact ? 16 : 18
     }
 
     var recordDotSize: CGFloat {

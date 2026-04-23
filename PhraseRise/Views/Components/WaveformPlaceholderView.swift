@@ -27,6 +27,16 @@ struct WaveformPlaceholderView: View {
 
                 if let selection {
                     selectionOverlay(selection: selection, usable: usable, height: height)
+                    selectionMarker(
+                        label: "A",
+                        x: horizontalInset + CGFloat(selection.lowerBound) * usable,
+                        width: width
+                    )
+                    selectionMarker(
+                        label: "B",
+                        x: horizontalInset + CGFloat(selection.upperBound) * usable,
+                        width: width
+                    )
                 }
 
                 ForEach(Array(values.enumerated()), id: \.offset) { index, value in
@@ -91,6 +101,19 @@ struct WaveformPlaceholderView: View {
             )
             .frame(width: max(end - start, 24))
             .position(x: (start + end) / 2, y: height / 2)
+    }
+
+    private func selectionMarker(label: String, x: CGFloat, width: CGFloat) -> some View {
+        Text(label)
+            .font(AppTypography.micro)
+            .foregroundStyle(Color.black)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(
+                Capsule()
+                    .fill(AppColors.accent)
+            )
+            .position(x: min(max(x, 18), width - 18), y: 14)
     }
 
     private func staticHandle(x: CGFloat, height: CGFloat) -> some View {
